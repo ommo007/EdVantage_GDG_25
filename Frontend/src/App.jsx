@@ -1,4 +1,6 @@
-import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
+
+import { HashRouter as Router, Route, Routes, Navigate } from "react-router-dom";
+
 import LandingPage from "./Pages/LandingPages/Landing";  // ✅ Correct path
 import SignupPage from "./Pages/Signup/Signup";  // ✅ Correct path
 import AdminDashboard from "./components/AdminDashboard";  // ✅ Fixed path
