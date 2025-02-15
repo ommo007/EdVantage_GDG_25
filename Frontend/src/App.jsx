@@ -1,6 +1,10 @@
+<<<<<<< HEAD
 
 import { HashRouter as Router, Route, Routes, Navigate } from "react-router-dom";
 
+=======
+import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
+>>>>>>> ef34c5d (Frontend,Backend)
 import LandingPage from "./Pages/LandingPages/Landing";  // ✅ Correct path
 import SignupPage from "./Pages/Signup/Signup";  // ✅ Correct path
 import AdminDashboard from "./components/AdminDashboard";  // ✅ Fixed path
@@ -22,17 +26,25 @@ function App() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/signup" element={<SignupPage />} />
+<<<<<<< HEAD
         {/* <Route path="/admin/dashboard" element={<PrivateRoute element={AdminDashboard} role="admin" />} />
+=======
+        <Route path="/admin/dashboard" element={<PrivateRoute element={AdminDashboard} role="admin" />} />
+>>>>>>> ef34c5d (Frontend,Backend)
         <Route path="/admin/class-selection" element={<PrivateRoute element={AdminClassSelection} role="admin" />} />
         <Route path="/admin/study-space" element={<PrivateRoute element={AdminStudySpace} role="admin" />} />
         <Route
           path="/instructor/dashboard"
           element={<PrivateRoute element={InstructorDashboard} role="instructor" />}
+<<<<<<< HEAD
         /> */}
         <Route path="/admin/dashboard" element={AdminDashboard} />
         <Route path="/admin/class-selection" element={AdminClassSelection} />
         <Route path="/admin/study-space" element={AdminStudySpace} />
         <Route path="/instructor/dashboard" element={InstructorDashboard} />
+=======
+        />
+>>>>>>> ef34c5d (Frontend,Backend)
         <Route path="/teacherdash" element={<ClassSelectionPage />} />
         <Route path="/study/:classId" element={<StudyPage />} />
       </Routes>

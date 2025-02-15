@@ -1,0 +1,28 @@
+# Node.js dependencies (Frontend & Backend)
+node_modules/
+npm-debug.log
+yarn-error.log
+pnpm-debug.log
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Build & Cache
+dist/
+.build/
+.cache/
+.out/
+.next/
+.parcel-cache/
+.vite/
+
+# Environment variables
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+
+# Logs
+logs/
+*.log
