@@ -22,13 +22,17 @@ function App() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/signup" element={<SignupPage />} />
-        <Route path="/admin/dashboard" element={<PrivateRoute element={AdminDashboard} role="admin" />} />
+        {/* <Route path="/admin/dashboard" element={<PrivateRoute element={AdminDashboard} role="admin" />} />
         <Route path="/admin/class-selection" element={<PrivateRoute element={AdminClassSelection} role="admin" />} />
         <Route path="/admin/study-space" element={<PrivateRoute element={AdminStudySpace} role="admin" />} />
         <Route
           path="/instructor/dashboard"
           element={<PrivateRoute element={InstructorDashboard} role="instructor" />}
-        />
+        /> */}
+        <Route path="/admin/dashboard" element={AdminDashboard} />
+        <Route path="/admin/class-selection" element={AdminClassSelection} />
+        <Route path="/admin/study-space" element={AdminStudySpace} />
+        <Route path="/instructor/dashboard" element={InstructorDashboard} />
         <Route path="/teacherdash" element={<ClassSelectionPage />} />
         <Route path="/study/:classId" element={<StudyPage />} />
       </Routes>
