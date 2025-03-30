@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { 
-  BookOpen, 
   User, 
   ChevronDown, 
   Settings, 
@@ -10,7 +9,7 @@ import {
   Calendar,
   ArrowRight
 } from 'lucide-react';
-
+import Logo from './Logo';
 
   
   // Then modify the fetchInstructorClasses function to use mock data
@@ -80,12 +79,7 @@ const InstructorDashboard = () => {
       {/* Header */}
       <header className="bg-white shadow-sm border-b border-indigo-100 h-14">
         <nav className="container mx-auto px-4 h-full flex justify-between items-center">
-          <div className="flex items-center space-x-2">
-            <BookOpen className="h-6 w-6 text-indigo-600" />
-            <div className="text-2xl font-bold text-indigo-700">
-              Edva<span className="text-purple-600">ntage</span>
-            </div>
-          </div>
+          <Logo />
           <div className="relative">
             <button
               onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
@@ -120,9 +114,18 @@ const InstructorDashboard = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-indigo-900">Your Classes</h1>
-          <p className="text-indigo-600 mt-2">Select a class to begin teaching</p>
+        <div className="mb-8 flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-indigo-900">Your Classes</h1>
+            <p className="text-indigo-600 mt-2">Select a class to begin teaching</p>
+          </div>
+          <Link
+            to="/instructor/classes"
+            className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition duration-300 font-medium flex items-center"
+          >
+            Browse All Classes
+            <ArrowRight className="ml-2 h-5 w-5" />
+          </Link>
         </div>
 
         {isLoading ? (
@@ -164,5 +167,6 @@ const InstructorDashboard = () => {
     </div>
   );
 };
+
 
 export default InstructorDashboard;

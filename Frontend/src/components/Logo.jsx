@@ -1,3 +1,4 @@
+
 import { BookOpen } from 'lucide-react';
 export default function Logo() {
     return (
@@ -8,4 +9,5 @@ export default function Logo() {
       </div>
       </div>
     )
+
   }

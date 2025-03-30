@@ -9,11 +9,12 @@ import { Link } from "react-router-dom"
 const userRoles = [
   { value: "admin", label: "Admin", description: "Manage the entire system and oversee instructors" },
   { value: "instructor", label: "Instructor", description: "Create and manage lessons for students" },
+  { value: "student", label: "Student", description: "Access courses and learning materials" },
 ]
 
 export default function SignupPage() {
   const [formData, setFormData] = useState({
-    userType: "admin",
+    userType: "student",
     email: "",
     password: "",
   })
@@ -206,4 +207,5 @@ export default function SignupPage() {
     </div>
   )
 }
+
 

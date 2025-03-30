@@ -1,7 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import { User, LogOut, Settings, Search, BookOpen, ChevronDown, Eye } from "lucide-react"
+import { User, LogOut, Settings, Search, ChevronDown, Eye, ChevronLeft } from "lucide-react"
+import { Link, useNavigate } from "react-router-dom"
+import Logo from "./Logo"
 
 const studySpaces = [
   { id: 1, name: "Mathematics 101", instructor: "John Doe", students: 25, lastActive: "2 hours ago" },
@@ -13,6 +15,13 @@ const studySpaces = [
 const AdminStudySpace = () => {
   const [searchTerm, setSearchTerm] = useState("")
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
+  const navigate = useNavigate()
+  
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('userRole');
+    navigate('/');
+  };
 
   const filteredSpaces = studySpaces.filter(
     (space) =>
@@ -24,12 +33,7 @@ const AdminStudySpace = () => {
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-white">
       <header className="bg-white border-b border-indigo-100">
         <nav className="container mx-auto px-4 py-3 flex justify-between items-center">
-          <div className="flex items-center space-x-2">
-            <BookOpen className="h-6 w-6 text-indigo-600" />
-            <div className="text-2xl font-bold text-indigo-700">
-              Edva<span className="text-purple-600">ntage</span>
-            </div>
-          </div>
+          <Logo />
           <div className="relative">
             <button
               onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
@@ -51,7 +55,10 @@ const AdminStudySpace = () => {
                   <Settings className="inline-block w-4 h-4 mr-2" />
                   Settings
                 </button>
-                <button className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 focus:outline-none focus:bg-red-100">
+                <button 
+                  onClick={handleLogout}
+                  className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 focus:outline-none focus:bg-red-100"
+                >
                   <LogOut className="inline-block w-4 h-4 mr-2" />
                   Logout
                 </button>
@@ -62,7 +69,16 @@ const AdminStudySpace = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold text-indigo-900 mb-6">Study Spaces</h1>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold text-indigo-900">Study Spaces</h1>
+          <Link
+            to="/admin"
+            className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition duration-300 font-medium flex items-center"
+          >
+            <ChevronLeft className="mr-2 h-5 w-5" />
+            Back to Dashboard
+          </Link>
+        </div>
 
         <div className="mb-8">
           <div className="relative max-w-md">
@@ -122,4 +138,5 @@ const AdminStudySpace = () => {
 }
 
 export default AdminStudySpace
+
 

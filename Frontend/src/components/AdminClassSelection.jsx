@@ -1,8 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import { User, LogOut, Settings, Search, BookOpen, ChevronDown, ChevronLeft } from "lucide-react"
-import { Link } from "react-router-dom"
+import { User, LogOut, Settings, Search, ChevronDown, ChevronLeft } from "lucide-react"
+import { Link, useNavigate } from "react-router-dom"
+import Logo from "./Logo"
 
 const assignedClasses = [
   { id: 1, name: "Mathematics 101", instructor: "John Doe" },
@@ -14,6 +15,13 @@ const assignedClasses = [
 const AdminClassSelection = () => {
   const [searchTerm, setSearchTerm] = useState("")
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
+  const navigate = useNavigate()
+  
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('userRole');
+    navigate('/');
+  };
 
   const filteredClasses = assignedClasses.filter(
     (cls) =>
@@ -25,12 +33,7 @@ const AdminClassSelection = () => {
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-white">
       <header className="bg-white border-b border-indigo-100">
         <nav className="container mx-auto px-4 py-3 flex justify-between items-center">
-          <div className="flex items-center space-x-2">
-            <BookOpen className="h-6 w-6 text-indigo-600" />
-            <div className="text-2xl font-bold text-indigo-700">
-              Edva<span className="text-purple-600">ntage</span>
-            </div>
-          </div>
+          <Logo />
           <div className="relative">
             <button
               onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
@@ -52,7 +55,10 @@ const AdminClassSelection = () => {
                   <Settings className="inline-block w-4 h-4 mr-2" />
                   Settings
                 </button>
-                <button className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 focus:outline-none focus:bg-red-100">
+                <button 
+                  onClick={handleLogout}
+                  className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 focus:outline-none focus:bg-red-100"
+                >
                   <LogOut className="inline-block w-4 h-4 mr-2" />
                   Logout
                 </button>
@@ -104,4 +110,5 @@ const AdminClassSelection = () => {
 }
 
 export default AdminClassSelection
+
 

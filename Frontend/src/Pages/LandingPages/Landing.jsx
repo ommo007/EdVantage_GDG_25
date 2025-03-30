@@ -1,3 +1,4 @@
+
 import { Link } from 'react-router-dom'; // Import from react-router-dom
 import { Brain, LineChart, Users } from "lucide-react";
 import Background from "../../components/Background";
@@ -62,4 +63,5 @@ function FeatureCard({ icon, title, description }) {
       <p className="text-indigo-600">{description}</p>
     </div>
   )
+
 }

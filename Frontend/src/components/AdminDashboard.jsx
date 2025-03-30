@@ -1,8 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import { User, LogOut, Settings, Search, BookOpen, ChevronDown, ChevronRight } from "lucide-react"
-import { Link } from "react-router-dom"
+import { User, LogOut, Settings, Search, ChevronDown, ChevronRight } from "lucide-react"
+import { Link, useNavigate } from "react-router-dom"
+import Logo from "./Logo"
 
 const classes = [
   { id: 1, name: "Mathematics 101", description: "Introduction to basic mathematics" },
@@ -21,6 +22,7 @@ const AdminDashboard = () => {
   const [searchTerm, setSearchTerm] = useState("")
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const [assignments, setAssignments] = useState({})
+  const navigate = useNavigate()
 
   const handleAssignInstructor = (classId, instructorId) => {
     setAssignments((prev) => ({
@@ -28,6 +30,12 @@ const AdminDashboard = () => {
       [classId]: instructorId,
     }))
   }
+  
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('userRole');
+    navigate('/');
+  };
 
   const filteredClasses = classes.filter(
     (cls) =>
@@ -39,12 +47,7 @@ const AdminDashboard = () => {
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-white">
       <header className="bg-white border-b border-indigo-100">
         <nav className="container mx-auto px-4 py-3 flex justify-between items-center">
-          <div className="flex items-center space-x-2">
-            <BookOpen className="h-6 w-6 text-indigo-600" />
-            <div className="text-2xl font-bold text-indigo-700">
-              Edva<span className="text-purple-600">ntage</span>
-            </div>
-          </div>
+          <Logo />
           <div className="relative">
             <button
               onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
@@ -66,7 +69,10 @@ const AdminDashboard = () => {
                   <Settings className="inline-block w-4 h-4 mr-2" />
                   Settings
                 </button>
-                <button className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 focus:outline-none focus:bg-red-100">
+                <button 
+                  onClick={handleLogout}
+                  className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 focus:outline-none focus:bg-red-100"
+                >
                   <LogOut className="inline-block w-4 h-4 mr-2" />
                   Logout
                 </button>
@@ -78,6 +84,33 @@ const AdminDashboard = () => {
 
       <main className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold text-indigo-900 mb-6">Admin Dashboard</h1>
+
+        {/* Admin actions menu */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <Link 
+            to="/admin/classes" 
+            className="bg-white p-6 rounded-xl shadow-sm border border-indigo-100 hover:shadow-md transition-all duration-300"
+          >
+            <h3 className="text-xl font-semibold text-indigo-900">Manage Classes</h3>
+            <p className="text-indigo-600 mt-2">View and assign classes to instructors</p>
+          </Link>
+          
+          <Link 
+            to="/admin/study-space" 
+            className="bg-white p-6 rounded-xl shadow-sm border border-indigo-100 hover:shadow-md transition-all duration-300"
+          >
+            <h3 className="text-xl font-semibold text-indigo-900">Study Spaces</h3>
+            <p className="text-indigo-600 mt-2">Monitor active learning environments</p>
+          </Link>
+          
+          <Link 
+            to="/admin" 
+            className="bg-white p-6 rounded-xl shadow-sm border border-indigo-100 hover:shadow-md transition-all duration-300"
+          >
+            <h3 className="text-xl font-semibold text-indigo-900">User Management</h3>
+            <p className="text-indigo-600 mt-2">Manage students and instructors</p>
+          </Link>
+        </div>
 
         <div className="mb-8">
           <div className="relative max-w-md">
@@ -134,4 +167,5 @@ const AdminDashboard = () => {
 }
 
 export default AdminDashboard
+
 

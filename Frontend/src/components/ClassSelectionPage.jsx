@@ -1,7 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import { ChevronDown, User, LogOut, Settings, Search, BookOpen, ChevronRight } from "lucide-react"
+import { useNavigate } from "react-router-dom"
+import { ChevronDown, User, LogOut, Settings, Search, ChevronRight, ChevronLeft } from "lucide-react"
+import Logo from "./Logo"
 
 const classCategories = [
   {
@@ -53,10 +55,19 @@ const ClassSelectionPage = () => {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [expandedSubjects, setExpandedSubjects] = useState({})
+  const navigate = useNavigate()
+  
+  const userRole = localStorage.getItem("userRole") || "student"
 
   const handleNavigateToStudy = (classId) => {
-    console.log(`Navigating to /study/${classId}`)
+    navigate(`/study/${classId}`)
   }
+  
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('userRole');
+    navigate('/');
+  };
 
   const toggleSubjects = (classId) => {
     setExpandedSubjects((prev) => ({
@@ -79,19 +90,14 @@ const ClassSelectionPage = () => {
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-white">
       <header className="bg-white border-b border-indigo-100">
         <nav className="container mx-auto px-4 py-3 flex justify-between items-center">
-          <div className="flex items-center space-x-2">
-            <BookOpen className="h-6 w-6 text-indigo-600" />
-            <div className="text-2xl font-bold text-indigo-700">
-              Edva<span className="text-purple-600">ntage</span>
-            </div>
-          </div>
+          <Logo />
           <div className="relative">
             <button
               onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
               className="flex items-center space-x-2 text-indigo-700 hover:text-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 rounded-md transition duration-300"
             >
               <User className="h-5 w-5" />
-              <span>John Doe</span>
+              <span>{userRole.charAt(0).toUpperCase() + userRole.slice(1)}</span>
               <ChevronDown
                 className={`h-4 w-4 transform transition-transform duration-200 ${isUserMenuOpen ? "rotate-180" : ""}`}
               />
@@ -106,7 +112,10 @@ const ClassSelectionPage = () => {
                   <Settings className="inline-block w-4 h-4 mr-2" />
                   Settings
                 </button>
-                <button className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 focus:outline-none focus:bg-red-100">
+                <button 
+                  onClick={handleLogout}
+                  className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 focus:outline-none focus:bg-red-100"
+                >
                   <LogOut className="inline-block w-4 h-4 mr-2" />
                   Logout
                 </button>
@@ -117,6 +126,17 @@ const ClassSelectionPage = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold text-indigo-900">Welcome to Your Learning Journey</h1>
+          <button
+            onClick={() => navigate(`/${userRole}`)}
+            className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition duration-300 font-medium flex items-center"
+          >
+            <ChevronLeft className="mr-2 h-5 w-5" />
+            Back to Dashboard
+          </button>
+        </div>
+
         <div className="max-w-2xl mx-auto mb-8">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-indigo-400 h-5 w-5" />
@@ -197,4 +217,5 @@ const ClassSelectionPage = () => {
 }
 
 export default ClassSelectionPage
+
 
