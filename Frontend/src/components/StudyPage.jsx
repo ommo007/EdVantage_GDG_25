@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
-import { ChevronDown, User, LogOut, Calendar, MessageSquare, Edit, Menu, Settings, Grid, PanelRight, Code, Table, ArrowLeft } from "lucide-react"
+import { ChevronDown, User, LogOut, Calendar, MessageSquare, Edit, Menu, Settings, Grid, PanelRight, Code, Table, ArrowLeft, BookOpen } from "lucide-react"
 import Whiteboard from "./Whiteboard"
 import Logo from "./Logo"
 

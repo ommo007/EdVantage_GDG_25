@@ -1,12 +1,14 @@
-# Node.js dependencies (Frontend & Backend)
+# Node.js dependencies
 npm-debug.log
 yarn-error.log
 pnpm-debug.log
+
+# Lock files
 package-lock.json
 yarn.lock
 pnpm-lock.yaml
 
-# Build & Cache
+# Build & cache directories
 dist/
 .build/
 .cache/
@@ -15,6 +17,7 @@ dist/
 .parcel-cache/
 .vite/
 
+
 # Environment variables
 .env
 .env.local
@@ -22,7 +25,10 @@ dist/
 .env.production
 .env.test
 
-# Logs
+# Log files and folders
 logs/
 *.log
-Frontend/node_modules
+
+# Node modules
+node_modules/
+Frontend/node_modules/

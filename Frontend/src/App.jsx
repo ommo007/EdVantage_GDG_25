@@ -58,16 +58,22 @@ function App() {
         <Route path="/admin/classes" element={<ProtectedRoute element={<AdminClassSelection />} allowedRole="admin" />} />
         <Route path="/admin/study-space" element={<ProtectedRoute element={<AdminStudySpace />} allowedRole="admin" />} />
         <Route path="/admin/class-selection" element={<Navigate to="/admin/classes" replace />} />
+        <Route path="/admin/users" element={<ProtectedRoute element={<AdminDashboard />} allowedRole="admin" />} />
+        <Route path="/admin/analytics" element={<ProtectedRoute element={<AdminDashboard />} allowedRole="admin" />} />
+        <Route path="/admin/activity" element={<ProtectedRoute element={<AdminDashboard />} allowedRole="admin" />} />
+        <Route path="/admin/instructors" element={<ProtectedRoute element={<AdminClassSelection />} allowedRole="admin" />} />
 
         {/* Instructor Routes */}
         <Route path="/instructor" element={<ProtectedRoute element={<InstructorDashboard />} allowedRole="instructor" />} />
         <Route path="/instructor/dashboard" element={<Navigate to="/instructor" replace />} />
         <Route path="/instructor/classes" element={<ProtectedRoute element={<ClassSelectionPage />} allowedRole="instructor" />} />
+        <Route path="/instructor/analytics" element={<ProtectedRoute element={<InstructorDashboard />} allowedRole="instructor" />} />
 
         {/* Student Routes */}
         <Route path="/student" element={<ProtectedRoute element={<StudentDashboard />} allowedRole="student" />} />
         <Route path="/student/dashboard" element={<Navigate to="/student" replace />} />
         <Route path="/student/classes" element={<ProtectedRoute element={<ClassSelectionPage />} allowedRole="student" />} />
+        <Route path="/student/calendar" element={<ProtectedRoute element={<StudentDashboard />} allowedRole="student" />} />
         <Route path="/study/:classId?" element={<ProtectedRoute element={<StudyPage />} />} />
 
         {/* Legacy Route Redirects */}

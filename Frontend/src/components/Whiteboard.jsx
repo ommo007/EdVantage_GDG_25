@@ -1,168 +1,143 @@
-
 "use client"
 
-import { useState, useRef, useEffect } from "react"
-import { Download, Eraser, Circle, Square, Minus } from "lucide-react"
+import { useState, useRef, useEffect } from "react";
+import { Eraser, MousePointer, Pencil, Square, Circle, Type, Download, Trash2 } from "lucide-react";
 
 const Whiteboard = () => {
-  const canvasRef = useRef(null)
-  const [isDrawing, setIsDrawing] = useState(false)
-  const [color, setColor] = useState("#000000")
-  const [brushSize, setBrushSize] = useState(5)
-  const [tool, setTool] = useState("pen")
-
+  const canvasRef = useRef(null);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [tool, setTool] = useState("pencil");
+  const [color, setColor] = useState("#000000");
+  const [lineWidth, setLineWidth] = useState(5);
+  const [drawingHistory, setDrawingHistory] = useState([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+  
   useEffect(() => {
-    const canvas = canvasRef.current
-    const context = canvas.getContext("2d")
-    context.lineCap = "round"
-    context.strokeStyle = color
-    context.lineWidth = brushSize
-  }, [color, brushSize])
-
+    const canvas = canvasRef.current;
+    const context = canvas.getContext("2d");
+    
+    // Set canvas size
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+    
+    // Set default styles
+    context.lineCap = "round";
+    context.lineJoin = "round";
+    context.strokeStyle = color;
+    context.lineWidth = lineWidth;
+    
+    // Clear the canvas
+    context.fillStyle = "white";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Save initial state
+    saveState();
+  }, []);
+  
+  // Update context when color or line width changes
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const context = canvas.getContext("2d");
+    context.strokeStyle = color;
+    context.lineWidth = lineWidth;
+  }, [color, lineWidth]);
+  
   const startDrawing = (e) => {
-    const canvas = canvasRef.current
-    const context = canvas.getContext("2d")
-    const rect = canvas.getBoundingClientRect()
-    const x = e.clientX - rect.left
-    const y = e.clientY - rect.top
-
-    context.beginPath()
-    context.moveTo(x, y)
-    setIsDrawing(true)
-
-    if (tool === "eraser") {
-      context.globalCompositeOperation = "destination-out"
-    } else {
-      context.globalCompositeOperation = "source-over"
-    }
-  }
-
+    const canvas = canvasRef.current;
+    const context = canvas.getContext("2d");
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    context.beginPath();
+    context.moveTo(x, y);
+    setIsDrawing(true);
+  };
+  
   const draw = (e) => {
-    if (!isDrawing) return
-
-    const canvas = canvasRef.current
-    const context = canvas.getContext("2d")
-    const rect = canvas.getBoundingClientRect()
-    const x = e.clientX - rect.left
-    const y = e.clientY - rect.top
-
-    if (tool === "pen" || tool === "eraser") {
-      context.lineTo(x, y)
-      context.stroke()
-    } else if (tool === "circle") {
-      const radius = Math.sqrt(Math.pow(x - context.moveTo.x, 2) + Math.pow(y - context.moveTo.y, 2))
-      context.beginPath()
-      context.arc(context.moveTo.x, context.moveTo.y, radius, 0, 2 * Math.PI)
-      context.stroke()
-    } else if (tool === "square") {
-      const width = x - context.moveTo.x
-      const height = y - context.moveTo.y
-      context.strokeRect(context.moveTo.x, context.moveTo.y, width, height)
-    } else if (tool === "line") {
-      context.beginPath()
-      context.moveTo(context.moveTo.x, context.moveTo.y)
-      context.lineTo(x, y)
-      context.stroke()
-    }
-  }
-
+    if (!isDrawing) return;
+    
+    const canvas = canvasRef.current;
+    const context = canvas.getContext("2d");
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    context.lineTo(x, y);
+    context.stroke();
+  };
+  
   const stopDrawing = () => {
-    setIsDrawing(false)
-  }
-
+    if (isDrawing) {
+      const canvas = canvasRef.current;
+      const context = canvas.getContext("2d");
+      context.closePath();
+      setIsDrawing(false);
+      saveState();
+    }
+  };
+  
+  const saveState = () => {
+    const canvas = canvasRef.current;
+    const newState = canvas.toDataURL();
+    const newHistory = drawingHistory.slice(0, historyIndex + 1);
+    newHistory.push(newState);
+    setDrawingHistory(newHistory);
+    setHistoryIndex(newHistory.length - 1);
+  };
+  
   const clearCanvas = () => {
-    const canvas = canvasRef.current
-    const context = canvas.getContext("2d")
-    context.clearRect(0, 0, canvas.width, canvas.height)
-  }
-
-  const downloadCanvas = () => {
-    const canvas = canvasRef.current
-    const image = canvas.toDataURL("image/png")
-    const link = document.createElement("a")
-    link.href = image
-    link.download = "whiteboard.png"
-    link.click()
-  }
-
+    const canvas = canvasRef.current;
+    const context = canvas.getContext("2d");
+    context.fillStyle = "white";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    saveState();
+  };
+  
   return (
-    <div className="h-full flex flex-col">
-      <div className="flex justify-between items-center mb-2">
-        <div className="flex items-center space-x-2">
-          <input
-            type="color"
-            value={color}
-            onChange={(e) => setColor(e.target.value)}
-            className="w-8 h-8 rounded-full overflow-hidden"
-          />
-          <input
-            type="range"
-            min="1"
-            max="20"
-            value={brushSize}
-            onChange={(e) => setBrushSize(e.target.value)}
-            className="w-32"
-          />
-          <button
-            onClick={() => setTool("pen")}
-            className={`p-2 rounded-md ${tool === "pen" ? "bg-indigo-200" : "bg-gray-200"}`}
-          >
-            Pen
-          </button>
-          <button
-            onClick={() => setTool("eraser")}
-            className={`p-2 rounded-md ${tool === "eraser" ? "bg-indigo-200" : "bg-gray-200"}`}
-          >
-            <Eraser size={20} />
-          </button>
-          <button
-            onClick={() => setTool("circle")}
-            className={`p-2 rounded-md ${tool === "circle" ? "bg-indigo-200" : "bg-gray-200"}`}
-          >
-            <Circle size={20} />
-          </button>
-          <button
-            onClick={() => setTool("square")}
-            className={`p-2 rounded-md ${tool === "square" ? "bg-indigo-200" : "bg-gray-200"}`}
-          >
-            <Square size={20} />
-          </button>
-          <button
-            onClick={() => setTool("line")}
-            className={`p-2 rounded-md ${tool === "line" ? "bg-indigo-200" : "bg-gray-200"}`}
-          >
-            <Minus size={20} />
-          </button>
-        </div>
-        <div className="flex space-x-2">
-          <button
-            onClick={clearCanvas}
-            className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition duration-300"
-          >
-            Clear
-          </button>
-          <button
-            onClick={downloadCanvas}
-            className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition duration-300"
-          >
-            <Download size={20} />
-          </button>
-        </div>
+    <div className="whiteboard-container h-full flex flex-col">
+      <div className="whiteboard-toolbar flex space-x-2 mb-2 p-2 bg-indigo-50 rounded-lg">
+        <button 
+          className={`whiteboard-tool ${tool === "pencil" ? "active" : ""}`} 
+          onClick={() => setTool("pencil")}
+        >
+          <Pencil size={20} />
+        </button>
+        <button 
+          className={`whiteboard-tool ${tool === "eraser" ? "active" : ""}`} 
+          onClick={() => setTool("eraser")}
+        >
+          <Eraser size={20} />
+        </button>
+        <div className="border-r border-indigo-200 mx-1 h-6"></div>
+        <input 
+          type="color" 
+          value={color} 
+          onChange={(e) => setColor(e.target.value)} 
+          className="h-8 w-8 cursor-pointer rounded"
+        />
+        <div className="border-r border-indigo-200 mx-1 h-6"></div>
+        <button 
+          className="whiteboard-tool text-red-500 hover:bg-red-50" 
+          onClick={clearCanvas}
+        >
+          <Trash2 size={20} />
+        </button>
       </div>
-      <canvas
-        ref={canvasRef}
-        width={800}
-        height={600}
-        onMouseDown={startDrawing}
-        onMouseMove={draw}
-        onMouseUp={stopDrawing}
-        onMouseOut={stopDrawing}
-        className="border border-gray-300 rounded-lg cursor-crosshair flex-grow"
-      />
+      <div className="flex-1 border border-indigo-100 rounded-lg overflow-hidden">
+        <canvas
+          ref={canvasRef}
+          onMouseDown={startDrawing}
+          onMouseMove={draw}
+          onMouseUp={stopDrawing}
+          onMouseLeave={stopDrawing}
+          className="w-full h-full cursor-crosshair bg-white"
+        />
+      </div>
     </div>
-  )
-}
+  );
+};
 
-export default Whiteboard
+export default Whiteboard;
 
 
