@@ -1,221 +1,191 @@
-"use client"
-
-import { useState } from "react"
-import { useNavigate } from "react-router-dom"
-import { ChevronDown, User, LogOut, Settings, Search, ChevronRight, ChevronLeft } from "lucide-react"
-import Logo from "./Logo"
-
-const classCategories = [
-  {
-    name: "Kindergarten",
-    description: "Foundation years of learning through play and discovery",
-    gradient: "from-pink-500 to-rose-500",
-    classes: [
-      { id: "kg1", name: "KG 1", icon: "🎨", subjects: ["Basic Numbers", "Letters", "Arts"] },
-      { id: "kg2", name: "KG 2", icon: "🧩", subjects: ["Numbers", "Words", "Crafts"] },
-    ],
-  },
-  {
-    name: "Primary",
-    description: "Building fundamental knowledge and skills",
-    gradient: "from-blue-500 to-cyan-500",
-    classes: [
-      { id: "grade1", name: "Grade 1", icon: "📚", subjects: ["Math", "English", "Science"] },
-      { id: "grade2", name: "Grade 2", icon: "✏️", subjects: ["Math", "English", "Science"] },
-      { id: "grade3", name: "Grade 3", icon: "🔢", subjects: ["Math", "English", "Science"] },
-      { id: "grade4", name: "Grade 4", icon: "🌍", subjects: ["Math", "English", "Science", "Social Studies"] },
-      { id: "grade5", name: "Grade 5", icon: "🧪", subjects: ["Math", "English", "Science", "Social Studies"] },
-    ],
-  },
-  {
-    name: "Secondary",
-    description: "Advancing knowledge with specialized subjects",
-    gradient: "from-purple-500 to-indigo-500",
-    classes: [
-      { id: "grade6", name: "Grade 6", icon: "🔬", subjects: ["Math", "Science", "Language Arts"] },
-      { id: "grade7", name: "Grade 7", icon: "📐", subjects: ["Algebra", "Biology", "Literature"] },
-      { id: "grade8", name: "Grade 8", icon: "🧬", subjects: ["Geometry", "Chemistry", "History"] },
-      { id: "grade9", name: "Grade 9", icon: "🔭", subjects: ["Physics", "World History", "Literature"] },
-      { id: "grade10", name: "Grade 10", icon: "💻", subjects: ["Advanced Math", "Biology", "Computer Science"] },
-    ],
-  },
-  {
-    name: "Higher Secondary",
-    description: "Preparing for higher education and specialization",
-    gradient: "from-emerald-500 to-teal-500",
-    classes: [
-      { id: "grade11", name: "Grade 11", icon: "🧠", subjects: ["Physics", "Chemistry", "Mathematics"] },
-      { id: "grade12", name: "Grade 12", icon: "🎓", subjects: ["Advanced Physics", "Advanced Chemistry", "Calculus"] },
-    ],
-  },
-]
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Search, Filter, Users, BookOpen, Calendar, ArrowLeft } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import DashboardHeader from './shared/DashboardHeader';
 
 const ClassSelectionPage = () => {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
-  const [selectedCategory, setSelectedCategory] = useState(null)
-  const [expandedSubjects, setExpandedSubjects] = useState({})
-  const navigate = useNavigate()
+  const { userRole } = useAuth();
+  const navigate = useNavigate();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [categories, setCategories] = useState(['All', 'Math', 'Science', 'Computer Science', 'Languages', 'History']);
+  const [selectedCategory, setSelectedCategory] = useState('All');
   
-  const userRole = localStorage.getItem("userRole") || "student"
+  // Mock classes data
+  const [allClasses, setAllClasses] = useState([
+    { 
+      id: 1, 
+      name: "Introduction to Calculus", 
+      instructor: "Dr. Jane Smith", 
+      category: "Math",
+      students: 28,
+      schedule: "Mon, Wed, Fri 10:00 AM",
+      description: "Learn the fundamentals of calculus, including limits, derivatives, and integrals."
+    },
+    { 
+      id: 2, 
+      name: "Physics 101", 
+      instructor: "Prof. Robert Johnson", 
+      category: "Science",
+      students: 24,
+      schedule: "Tue, Thu 11:00 AM",
+      description: "An introductory course covering mechanics, thermodynamics, and waves."
+    },
+    { 
+      id: 3, 
+      name: "Programming Basics", 
+      instructor: "Dr. Michael Chen", 
+      category: "Computer Science",
+      students: 32,
+      schedule: "Mon, Wed 2:00 PM",
+      description: "Introduction to programming concepts using Python."
+    },
+    { 
+      id: 4, 
+      name: "World History", 
+      instructor: "Prof. Emily Davis", 
+      category: "History",
+      students: 35,
+      schedule: "Tue, Thu 9:00 AM",
+      description: "Explore the major events that shaped our world from ancient civilizations to modern times."
+    },
+    { 
+      id: 5, 
+      name: "Spanish for Beginners", 
+      instructor: "Maria Rodriguez", 
+      category: "Languages",
+      students: 20,
+      schedule: "Fri 1:00 PM",
+      description: "Learn basic Spanish vocabulary, grammar, and conversation skills."
+    }
+  ]);
 
-  const handleNavigateToStudy = (classId) => {
-    navigate(`/study/${classId}`)
-  }
-  
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('userRole');
-    navigate('/');
+  useEffect(() => {
+    // Simulate API call
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+    
+    return () => clearTimeout(timer);
+  }, []);
+
+  const handleJoinClass = (classId) => {
+    // In a real app, you'd call an API to join the class
+    console.log(`Joining class ${classId}`);
+    
+    // Navigate to the class study page
+    navigate(`/study/${classId}`);
   };
 
-  const toggleSubjects = (classId) => {
-    setExpandedSubjects((prev) => ({
-      ...prev,
-      [classId]: !prev[classId],
-    }))
-  }
-
-  const filteredCategories = classCategories.filter(
-    (category) =>
-      category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      category.classes.some(
-        (cls) =>
-          cls.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          cls.subjects.some((subject) => subject.toLowerCase().includes(searchTerm.toLowerCase())),
-      ),
-  )
+  // Filter classes based on search term and category
+  const filteredClasses = allClasses.filter(cls => {
+    const matchesSearch = cls.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         cls.instructor.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = selectedCategory === 'All' || cls.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-white">
-      <header className="bg-white border-b border-indigo-100">
-        <nav className="container mx-auto px-4 py-3 flex justify-between items-center">
-          <Logo />
-          <div className="relative">
-            <button
-              onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-              className="flex items-center space-x-2 text-indigo-700 hover:text-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 rounded-md transition duration-300"
-            >
-              <User className="h-5 w-5" />
-              <span>{userRole.charAt(0).toUpperCase() + userRole.slice(1)}</span>
-              <ChevronDown
-                className={`h-4 w-4 transform transition-transform duration-200 ${isUserMenuOpen ? "rotate-180" : ""}`}
-              />
-            </button>
-            {isUserMenuOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1 z-50 border border-indigo-100">
-                <button className="block w-full text-left px-4 py-2 text-sm text-indigo-700 hover:bg-indigo-50 focus:outline-none focus:bg-indigo-100">
-                  <User className="inline-block w-4 h-4 mr-2" />
-                  Profile
-                </button>
-                <button className="block w-full text-left px-4 py-2 text-sm text-indigo-700 hover:bg-indigo-50 focus:outline-none focus:bg-indigo-100">
-                  <Settings className="inline-block w-4 h-4 mr-2" />
-                  Settings
-                </button>
-                <button 
-                  onClick={handleLogout}
-                  className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 focus:outline-none focus:bg-red-100"
-                >
-                  <LogOut className="inline-block w-4 h-4 mr-2" />
-                  Logout
-                </button>
-              </div>
-            )}
-          </div>
-        </nav>
-      </header>
-
+      <DashboardHeader userRole={userRole} />
+      
       <main className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-indigo-900">Welcome to Your Learning Journey</h1>
-          <button
-            onClick={() => navigate(`/${userRole}`)}
-            className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition duration-300 font-medium flex items-center"
-          >
-            <ChevronLeft className="mr-2 h-5 w-5" />
-            Back to Dashboard
-          </button>
-        </div>
-
-        <div className="max-w-2xl mx-auto mb-8">
-          <div className="relative">
+        <button
+          onClick={() => navigate(`/${userRole}`)}
+          className="flex items-center text-indigo-600 hover:text-indigo-800 mb-6"
+        >
+          <ArrowLeft className="h-4 w-4 mr-1" />
+          Back to Dashboard
+        </button>
+        
+        <h1 className="text-3xl font-bold text-indigo-900 mb-2">Available Classes</h1>
+        <p className="text-indigo-600 mb-8">Browse and join classes to start learning</p>
+        
+        {/* Search and Filter */}
+        <div className="flex flex-col md:flex-row gap-4 mb-8">
+          <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-indigo-400 h-5 w-5" />
             <input
               type="text"
-              placeholder="Search for classes or subjects..."
+              placeholder="Search by class name or instructor..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 border border-indigo-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white placeholder-indigo-300"
+              className="w-full pl-10 pr-4 py-2 border border-indigo-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
             />
           </div>
-        </div>
-
-        <div className="space-y-8">
-          {filteredCategories.map((category) => (
-            <section
-              key={category.name}
-              className="bg-white rounded-lg border border-indigo-100 overflow-hidden transition-all duration-300 hover:shadow-md"
-            >
+          
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            {categories.map(category => (
               <button
-                onClick={() => setSelectedCategory(selectedCategory === category.name ? null : category.name)}
-                className={`w-full px-6 py-4 flex items-center justify-between bg-gradient-to-r ${category.gradient} hover:opacity-90 transition-all duration-300`}
-              >
-                <div>
-                  <h2 className="text-2xl font-bold text-white">{category.name}</h2>
-                  <p className="text-white/90 mt-1">{category.description}</p>
-                </div>
-                <ChevronRight
-                  className={`h-6 w-6 text-white transform transition-transform duration-300 ${
-                    selectedCategory === category.name ? "rotate-90" : ""
-                  }`}
-                />
-              </button>
-
-              <div
-                className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-6 transition-all duration-300 ${
-                  selectedCategory === category.name ? "block" : "hidden"
+                key={category}
+                onClick={() => setSelectedCategory(category)}
+                className={`px-4 py-2 rounded-md whitespace-nowrap ${
+                  selectedCategory === category 
+                    ? 'bg-indigo-600 text-white' 
+                    : 'bg-white text-indigo-600 border border-indigo-100 hover:bg-indigo-50'
                 }`}
               >
-                {category.classes.map((cls) => (
-                  <div
-                    key={cls.id}
-                    className="bg-white p-6 rounded-lg border border-indigo-100 flex flex-col items-center text-center transition-all duration-300 hover:scale-105 hover:shadow-md group"
-                  >
-                    <button
-                      onClick={() => handleNavigateToStudy(cls.id)}
-                      className="w-full focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-lg p-2"
-                    >
-                      <span className="text-4xl mb-3 block group-hover:scale-110 transition-transform duration-300">
-                        {cls.icon}
-                      </span>
-                      <h3 className="text-indigo-900 font-semibold text-lg mb-2">{cls.name}</h3>
-                    </button>
-                    <button
-                      onClick={() => toggleSubjects(cls.id)}
-                      className="mt-2 text-sm text-indigo-600 hover:text-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-md px-3 py-1"
-                    >
-                      {expandedSubjects[cls.id] ? "Hide Subjects" : "View All Subjects"}
-                    </button>
-                    {expandedSubjects[cls.id] && (
-                      <div className="mt-3 text-sm text-indigo-600">
-                        {cls.subjects.map((subject, idx) => (
-                          <div key={idx} className="py-1">
-                            {subject}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </section>
-          ))}
+                {category}
+              </button>
+            ))}
+          </div>
         </div>
+        
+        {/* Classes Grid */}
+        {isLoading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+          </div>
+        ) : filteredClasses.length === 0 ? (
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-indigo-100 text-center">
+            <BookOpen className="h-12 w-12 text-indigo-300 mx-auto mb-3" />
+            <h3 className="text-xl font-semibold text-indigo-900 mb-2">No classes found</h3>
+            <p className="text-indigo-600">Try adjusting your search or filter criteria</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredClasses.map(cls => (
+              <div 
+                key={cls.id}
+                className="bg-white rounded-xl shadow-sm border border-indigo-100 overflow-hidden hover:shadow-md transition-shadow"
+              >
+                <div className="p-6">
+                  <div className="flex justify-between items-start mb-4">
+                    <h3 className="text-xl font-semibold text-indigo-900">{cls.name}</h3>
+                    <span className="px-2 py-1 bg-indigo-100 text-indigo-600 text-xs rounded-full">{cls.category}</span>
+                  </div>
+                  
+                  <p className="text-indigo-600 mb-1">Instructor: {cls.instructor}</p>
+                  
+                  <div className="flex items-center text-sm text-indigo-500 mb-2">
+                    <Calendar className="h-4 w-4 mr-1" />
+                    {cls.schedule}
+                  </div>
+                  
+                  <div className="flex items-center text-sm text-indigo-500 mb-4">
+                    <Users className="h-4 w-4 mr-1" />
+                    {cls.students} students enrolled
+                  </div>
+                  
+                  <p className="text-gray-600 text-sm mb-6">{cls.description}</p>
+                  
+                  <button
+                    onClick={() => handleJoinClass(cls.id)}
+                    className="w-full bg-indigo-600 text-white py-2 rounded-md hover:bg-indigo-700 transition-colors font-medium"
+                  >
+                    Join Class
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </main>
     </div>
-  )
-}
+  );
+};
 
-export default ClassSelectionPage
+export default ClassSelectionPage;
 
 

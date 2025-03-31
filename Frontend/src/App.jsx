@@ -1,8 +1,11 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useState } from "react";
 import { HashRouter as Router, Route, Routes, Navigate } from "react-router-dom";
 import { useEffect } from "react";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import ErrorBoundary from "./components/ErrorBoundary";
+import NetworkStatusAlert from "./components/NetworkStatusAlert";
+import FirestoreStatusMonitor from "./components/FirestoreStatusMonitor";
+import ConnectionStatusBanner from "./components/ConnectionStatusBanner";
 
 console.log("App.jsx: Starting application...");
 
@@ -22,11 +25,14 @@ const AdminStudySpace = lazy(() => import("./components/AdminStudySpace"));
 
 // Instructor Components
 const InstructorDashboard = lazy(() => import("./components/InstructorDashboard"));
+const StudyMaterialsManager = lazy(() => import("./components/instructor/StudyMaterialsManager"));
+const RagAnalytics = lazy(() => import("./components/study/RagAnalytics"));
 
 // Student Components
 const StudentDashboard = lazy(() => import("./components/StudentDashboard"));
 const ClassSelectionPage = lazy(() => import("./components/ClassSelectionPage"));
 const StudyPage = lazy(() => import("./components/StudyPage"));
+const RagStudyAssistant = lazy(() => import("./components/study/RagStudyAssistant"));
 
 // Loading fallback
 const LoadingFallback = () => (
@@ -38,29 +44,37 @@ const LoadingFallback = () => (
   </div>
 );
 
-// Protected Route wrapper component
+// Enhanced Protected Route component with better routing
 const ProtectedRoute = ({ element, allowedRole }) => {
   const { currentUser, userRole, loading } = useAuth();
+  const pathname = window.location.pathname;
 
-  console.log(`ProtectedRoute: path=${window.location.pathname}, currentUser=${!!currentUser}, userRole=${userRole}, allowedRole=${allowedRole}, loading=${loading}`);
+  console.log(`ProtectedRoute check: path=${pathname}, user=${!!currentUser}, role=${userRole}, requiredRole=${allowedRole}`);
 
+  // Show loading state while authentication is being determined
   if (loading) {
     return <LoadingFallback />;
   }
 
-  // If not logged in, redirect to login
+  // If not logged in, redirect to login with a return path
   if (!currentUser) {
-    console.log("No user - redirecting to login");
-    return <Navigate to="/login" replace />;
+    console.log("No authenticated user - redirecting to login");
+    // Pass the current path as state to enable redirect back after login
+    return <Navigate to="/login" state={{ from: pathname }} replace />;
   }
 
-  // If role is required and doesn't match, redirect to appropriate dashboard
-  if (allowedRole && userRole !== allowedRole) {
-    console.log(`Role mismatch - redirecting from ${allowedRole} to ${userRole}`);
-    return <Navigate to={`/${userRole}`} replace />;
+  // Handle role-specific access
+  if (allowedRole) {
+    if (userRole !== allowedRole) {
+      console.log(`Access denied: User role (${userRole}) doesn't match required role (${allowedRole})`);
+      
+      // Redirect to their appropriate dashboard
+      return <Navigate to={`/${userRole}`} replace />;
+    }
   }
 
-  // Otherwise render the protected component
+  // Access granted
+  console.log("Access granted to:", pathname);
   return element;
 };
 
@@ -113,6 +127,12 @@ function AppContent() {
           <Route path="/instructor/classes" element={
             <ProtectedRoute element={<ClassSelectionPage />} allowedRole="instructor" />
           } />
+          <Route path="/instructor/study-materials/:classId" element={
+            <ProtectedRoute element={<StudyMaterialsManager />} allowedRole="instructor" />
+          } />
+          <Route path="/instructor/rag-analytics/:classId" element={
+            <ProtectedRoute element={<RagAnalytics />} allowedRole="instructor" />
+          } />
           <Route path="/instructor/*" element={
             <ProtectedRoute element={<InstructorDashboard />} allowedRole="instructor" />
           } />
@@ -149,11 +169,24 @@ function AppContent() {
 }
 
 function App() {
+  const [firestoreStatus, setFirestoreStatus] = useState('unknown');
+  
+  const handleFirestoreStatusChange = (status, error) => {
+    setFirestoreStatus(status);
+    if (status === 'error') {
+      console.error('Firestore connection issue detected:', error);
+    }
+  };
+  
   return (
     <ErrorBoundary>
       <AuthProvider>
         <div className="app-container">
+          <ConnectionStatusBanner />
           <AppContent />
+          {/* Remove these slower components and use the faster banner instead */}
+          {/* <NetworkStatusAlert />
+          <FirestoreStatusMonitor onStatusChange={handleFirestoreStatusChange} /> */}
         </div>
       </AuthProvider>
     </ErrorBoundary>

@@ -2,9 +2,26 @@
 
 import { useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
-import { ChevronDown, User, LogOut, Calendar, MessageSquare, Edit, Menu, Settings, Grid, PanelRight, Code, Table, ArrowLeft, BookOpen } from "lucide-react"
+import { 
+  ChevronDown, 
+  User, 
+  LogOut, 
+  Calendar, 
+  MessageSquare, 
+  Edit, 
+  Menu, 
+  Settings, 
+  Grid, 
+  PanelRight, 
+  Code, 
+  Table, 
+  ArrowLeft, 
+  BookOpen,
+  Database
+} from "lucide-react"
 import Whiteboard from "./Whiteboard"
 import Logo from "./Logo"
+import RagStudyAssistant from "./study/RagStudyAssistant"
 
 const StudyPage = () => {
   const [selectedDay, setSelectedDay] = useState(1) // Default to day 1
@@ -20,6 +37,7 @@ const StudyPage = () => {
   const [videoUrl, setVideoUrl] = useState("")
   const [isWhiteboardOpen, setIsWhiteboardOpen] = useState(false)
   const [activeTab, setActiveTab] = useState('workspace')
+  const [useRagAssistant, setUseRagAssistant] = useState(false)
 
   const navigate = useNavigate()
   const { classId } = useParams()
@@ -83,6 +101,10 @@ const StudyPage = () => {
   const toggleWhiteboard = () => {
     setIsWhiteboardOpen(!isWhiteboardOpen)
     setSelectedTool('whiteboard')
+  }
+
+  const toggleRagAssistant = () => {
+    setUseRagAssistant(!useRagAssistant)
   }
 
   return (
@@ -191,6 +213,14 @@ const StudyPage = () => {
           >
             <Code className="h-5 w-5 text-indigo-600" />
           </button>
+          <div className="h-8 border-r border-indigo-200 mx-1"></div>
+          <button 
+            onClick={toggleRagAssistant}
+            className={`p-2 rounded-md ${useRagAssistant ? 'bg-teal-200' : 'hover:bg-indigo-100'}`}
+            title="AI Study Assistant (RAG)"
+          >
+            <Database className="h-5 w-5 text-teal-600" />
+          </button>
         </div>
       </div>
 
@@ -252,7 +282,7 @@ const StudyPage = () => {
               )}
             </div>
           </div>
-
+          
           {/* Command Window (MATLAB-style command line/console) */}
           <div className="h-32 border-t border-indigo-100 bg-indigo-50 p-2 flex flex-col">
             <div className="text-xs text-indigo-700 mb-1 font-medium">Command Window</div>
@@ -264,63 +294,69 @@ const StudyPage = () => {
           </div>
         </div>
 
-        {/* Right Panel (AI Assistant) - like MATLAB's right variable panel */}
+        {/* Right Panel - Conditionally render either the Chat Assistant or RAG Assistant */}
         <div className="w-80 border-l border-indigo-100 bg-white flex flex-col">
-          {/* Chat Header */}
-          <div className="flex-none p-3 border-b border-indigo-100 flex justify-between items-center">
-            <h3 className="font-medium text-indigo-800">AI Assistant</h3>
-            <button className="p-1 hover:bg-indigo-50 rounded">
-              <PanelRight className="h-4 w-4 text-indigo-600" />
-            </button>
-          </div>
+          {useRagAssistant ? (
+            <RagStudyAssistant />
+          ) : (
+            <>
+              {/* Chat Header */}
+              <div className="flex-none p-3 border-b border-indigo-100 flex justify-between items-center">
+                <h3 className="font-medium text-indigo-800">AI Assistant</h3>
+                <button className="p-1 hover:bg-indigo-50 rounded">
+                  <PanelRight className="h-4 w-4 text-indigo-600" />
+                </button>
+              </div>
 
-          {/* Messages Container */}
-          <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-indigo-200 scrollbar-track-transparent hover:scrollbar-thumb-indigo-300">
-            <div className="p-3 space-y-3">
-              {messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}
-                >
-                  <div
-                    className={`max-w-[80%] rounded-xl px-3 py-2 text-sm ${
-                      message.sender === "user" ? "bg-indigo-600 text-white" : "bg-indigo-50 text-indigo-800"
-                    }`}
-                    onClick={() => handleVideoLinkClick(message)}
-                    style={{ cursor: message.sender === "bot" ? "pointer" : "default" }}
+              {/* Messages Container */}
+              <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-indigo-200 scrollbar-track-transparent hover:scrollbar-thumb-indigo-300">
+                <div className="p-3 space-y-3">
+                  {messages.map((message) => (
+                    <div
+                      key={message.id}
+                      className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}
+                    >
+                      <div
+                        className={`max-w-[80%] rounded-xl px-3 py-2 text-sm ${
+                          message.sender === "user" ? "bg-indigo-600 text-white" : "bg-indigo-50 text-indigo-800"
+                        }`}
+                        onClick={() => handleVideoLinkClick(message)}
+                        style={{ cursor: message.sender === "bot" ? "pointer" : "default" }}
+                      >
+                        {message.text}
+                      </div>
+                    </div>
+                  ))}
+                  {isLoading && (
+                    <div className="flex justify-start">
+                      <div className="bg-indigo-50 text-indigo-800 rounded-xl px-3 py-2 text-sm">Thinking...</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Input Container */}
+              <div className="flex-none p-3 border-t border-indigo-100 bg-white">
+                <div className="flex items-center gap-2">
+                  <textarea
+                    value={inputMessage}
+                    onChange={(e) => setInputMessage(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    placeholder="Ask the AI assistant..."
+                    rows="1"
+                    className="flex-1 px-3 py-2 border border-indigo-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none bg-indigo-50/30 placeholder-indigo-400 text-sm"
+                  />
+                  <button
+                    onClick={handleSendMessage}
+                    disabled={isLoading}
+                    className="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {message.text}
-                  </div>
+                    <MessageSquare className="w-4 h-4" />
+                  </button>
                 </div>
-              ))}
-              {isLoading && (
-                <div className="flex justify-start">
-                  <div className="bg-indigo-50 text-indigo-800 rounded-xl px-3 py-2 text-sm">Thinking...</div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Input Container */}
-          <div className="flex-none p-3 border-t border-indigo-100 bg-white">
-            <div className="flex items-center gap-2">
-              <textarea
-                value={inputMessage}
-                onChange={(e) => setInputMessage(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Ask the AI assistant..."
-                rows="1"
-                className="flex-1 px-3 py-2 border border-indigo-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none bg-indigo-50/30 placeholder-indigo-400 text-sm"
-              />
-              <button
-                onClick={handleSendMessage}
-                disabled={isLoading}
-                className="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <MessageSquare className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

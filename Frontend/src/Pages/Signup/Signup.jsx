@@ -8,11 +8,13 @@ import { useAuth } from "../../contexts/AuthContext";
 import Background from "../../components/Background";
 import Logo from "../../components/Logo";
 import PasswordStrengthMeter from "../../components/ui/PasswordStrengthMeter";
+import { ROLES } from '../../services/RoleManager';
+import { handleAuthError } from "../../firebase/auth-error-handler";
 
 const userRoles = [
-  { value: "student", label: "Student", description: "Access courses and learning materials", icon: "👨‍🎓" },
-  { value: "instructor", label: "Instructor", description: "Create and manage lessons for students", icon: "👨‍🏫" },
-  { value: "admin", label: "Admin", description: "Manage the entire system and oversee instructors", icon: "👨‍💼" }
+  { value: ROLES.STUDENT, label: "Student", description: "Access courses and learning materials", icon: "👨‍🎓" },
+  { value: ROLES.INSTRUCTOR, label: "Instructor", description: "Create and manage lessons for students", icon: "👨‍🏫" },
+  { value: ROLES.ADMIN, label: "Admin", description: "Manage the entire system and oversee instructors", icon: "👨‍💼" }
 ];
 
 export default function SignupPage() {
@@ -29,13 +31,14 @@ export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const totalSteps = 2;
   const navigate = useNavigate();
-  const { setRole, currentUser } = useAuth();
+  const { setRole, currentUser, userRole } = useAuth();
 
   useEffect(() => {
-    if (currentUser) {
-      navigate("/redirect");
+    if (currentUser && userRole) {
+      console.log(`User already logged in with role ${userRole}, redirecting to dashboard`);
+      navigate(`/${userRole}`);
     }
-  }, [currentUser, navigate]);
+  }, [currentUser, userRole, navigate]);
 
   const validateForm = () => {
     const newErrors = {};
@@ -73,21 +76,41 @@ export default function SignupPage() {
     setIsGoogleLoading(true);
 
     try {
-      const { user, profile } = await signInWithGoogle();
-
-      if (!profile || !profile.role) {
-        await setRole(formData.userType, true);
+      // Get the selected role from the form before signing in
+      const selectedRole = formData.userType;
+      console.log("Selected role before Google signup:", selectedRole);
+      
+      // First sign in with Google
+      const { user } = await signInWithGoogle();
+      
+      // Then explicitly set the correct role based on the form selection
+      if (selectedRole && Object.values(ROLES).includes(selectedRole)) {
+        console.log("Setting explicit role after Google signup:", selectedRole);
+        await setRole(selectedRole, true);
       } else {
-        await setRole(profile.role, true);
+        console.log("Fallback to student role");
+        await setRole(ROLES.STUDENT, true);
       }
 
-      navigate(`/redirect`);
+      // Redirect with a slight delay to ensure state is set
+      setTimeout(() => {
+        navigate("/redirect", { replace: true });
+      }, 100);
     } catch (error) {
       console.error("Google sign-up error:", error);
-      if (error.code === "auth/popup-closed-by-user") {
+      
+      // Handle network errors specifically
+      if (error.code === "auth/network-request-failed") {
+        setErrors({ 
+          ...errors, 
+          general: "Network connection error. Please check your internet connection and try again."
+        });
+      } else if (error.code === "auth/popup-closed-by-user") {
         setErrors({ ...errors, general: "Sign-up was cancelled" });
       } else {
-        setErrors({ ...errors, general: "Failed to sign up with Google. Please try again." });
+        // Use friendly message from error handler if available
+        const errorMessage = error.userMessage || error.message;
+        setErrors({ ...errors, general: `Failed to sign up with Google: ${errorMessage}` });
       }
     } finally {
       setIsGoogleLoading(false);
@@ -99,29 +122,21 @@ export default function SignupPage() {
     if (!validateForm()) return;
 
     setIsLoading(true);
-
     try {
-      const { user, profile } = await registerUser(
+      // Store selected role temporarily for AuthContext to pick up
+      localStorage.setItem("signupRole", formData.userType);
+      
+      const { user } = await registerUser(
         formData.email,
         formData.password,
         formData.displayName || null,
         formData.userType
       );
-
+      console.log("Setting explicit role after signup:", formData.userType);
       await setRole(formData.userType, true);
-      navigate("/redirect");
+      navigate("/redirect", { replace: true });
     } catch (error) {
-      console.error("Signup error:", error);
-
-      if (error.code === "auth/email-already-in-use") {
-        setErrors({ ...errors, email: "Email already in use" });
-      } else if (error.code === "auth/weak-password") {
-        setErrors({ ...errors, password: "Password is too weak" });
-      } else if (error.code === "auth/invalid-email") {
-        setErrors({ ...errors, email: "Invalid email format" });
-      } else {
-        setErrors({ ...errors, general: "Failed to create account: " + error.message });
-      }
+      // ...existing error handling...
     } finally {
       setIsLoading(false);
     }

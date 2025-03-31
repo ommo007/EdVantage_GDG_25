@@ -1,6 +1,6 @@
 "use client"
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Eye, EyeOff, ArrowRight, LucideLoader2 } from "lucide-react";
 import { loginUser, signInWithGoogle } from "../../firebase/auth";
 import { useAuth } from "../../contexts/AuthContext";
@@ -15,17 +15,20 @@ const LoginPage = () => {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [error, setError] = useState("");
   const [formFocus, setFormFocus] = useState(false);
+  const { login, signInWithGoogle, setRole, currentUser, userRole } = useAuth();
   const navigate = useNavigate();
-  const { setRole, currentUser } = useAuth();
+  const location = useLocation();
+  const returnPath = location.state?.from || `/${userRole || 'student'}`;
 
   useEffect(() => {
-    // If user is already logged in, redirect to their dashboard
-    if (currentUser) {
-      navigate("/redirect");
+    // If user is already logged in, redirect to their dashboard or return path
+    if (currentUser && userRole) {
+      console.log(`User already logged in with role ${userRole}, redirecting to:`, returnPath);
+      navigate(returnPath);
     }
-  }, [currentUser, navigate]);
+  }, [currentUser, userRole, navigate, returnPath]);
 
-  const handleSubmit = async (e) => {
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
     setError("");
     
@@ -37,41 +40,18 @@ const LoginPage = () => {
     setIsLoading(true);
     
     try {
-      // For demonstration purposes, we're still allowing the sample logins
-      // In a real app, you would remove this and only use Firebase authentication
-      if (email === "admin@example.com" && password === "password") {
-        await setRole("admin");
-        navigate("/redirect");
-        return;
-      } else if (email === "instructor@example.com" && password === "password") {
-        await setRole("instructor");
-        navigate("/redirect");
-        return;
-      } else if (email === "student@example.com" && password === "password") {
-        await setRole("student");
-        navigate("/redirect");
-        return;
-      } else if (email === "teacher@example.com" && password === "password") {
-        await setRole("instructor");
-        navigate("/redirect");
-        return;
-      }
+      // Login - wait for this to complete
+      await login(email, password);
       
-      // Attempt Firebase login
-      const { user, profile } = await loginUser(email, password);
-      
-      if (profile && profile.role) {
-        // Set user role from profile
-        await setRole(profile.role);
-        navigate("/redirect");
-      } else {
-        // Set default role as student if no role found
-        await setRole("student");
-        navigate("/redirect");
-      }
+      // Add a short delay before navigation to ensure context is updated
+      setTimeout(() => {
+        console.log("Login successful, redirecting");
+        navigate('/redirect', { replace: true });
+      }, 100);
     } catch (err) {
       console.error("Login error:", err);
       
+      // Provide better error messages
       if (err.code === "auth/invalid-credential" || err.code === "auth/invalid-login-credentials") {
         setError("Invalid email or password");
       } else if (err.code === "auth/user-not-found") {
@@ -93,15 +73,13 @@ const LoginPage = () => {
     setIsGoogleLoading(true);
     
     try {
-      const { user, profile } = await signInWithGoogle();
+      await signInWithGoogle();
       
-      if (profile && profile.role) {
-        await setRole(profile.role);
-      } else {
-        await setRole("student");
-      }
-      
-      navigate("/redirect");
+      // Add a short delay before navigation to ensure context is updated
+      setTimeout(() => {
+        console.log("Google login successful, redirecting");
+        navigate("/redirect", { replace: true });
+      }, 100);
     } catch (err) {
       console.error("Google sign-in error:", err);
       if (err.code === "auth/popup-closed-by-user") {
@@ -194,7 +172,7 @@ const LoginPage = () => {
             </div>
           )}
           
-          <form onSubmit={handleSubmit} onFocus={() => setFormFocus(true)} onBlur={() => setFormFocus(false)}>
+          <form onSubmit={handleFormSubmit} onFocus={() => setFormFocus(true)} onBlur={() => setFormFocus(false)}>
             <div className="mb-5">
               <label htmlFor="email" className="block text-gray-700 font-medium mb-2 text-sm">
                 Email
