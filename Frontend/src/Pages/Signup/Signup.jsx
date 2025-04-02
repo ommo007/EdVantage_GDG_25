@@ -1,15 +1,19 @@
-"use client"
 
 import { useState, useEffect } from "react";
 import { User, Lock, Eye, EyeOff, LucideLoader2, ChevronLeft, ChevronRight, Check, Mail } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { registerUser, signInWithGoogle } from "../../firebase/auth";
+//import { registerUser, signInWithGoogle } from "../../firebase/auth";
 import { useAuth } from "../../contexts/AuthContext";
 import Background from "../../components/Background";
 import Logo from "../../components/Logo";
 import PasswordStrengthMeter from "../../components/ui/PasswordStrengthMeter";
-import { ROLES } from '../../services/RoleManager';
-import { handleAuthError } from "../../firebase/auth-error-handler";
+
+// Define roles locally for now
+const ROLES = {
+  STUDENT: 'student',
+  INSTRUCTOR: 'instructor',
+  ADMIN: 'admin'
+};
 
 const userRoles = [
   { value: ROLES.STUDENT, label: "Student", description: "Access courses and learning materials", icon: "👨‍🎓" },
@@ -31,7 +35,7 @@ export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const totalSteps = 2;
   const navigate = useNavigate();
-  const { setRole, currentUser, userRole } = useAuth();
+  const { signup, currentUser, userRole } = useAuth();
 
   useEffect(() => {
     if (currentUser && userRole) {
@@ -76,6 +80,7 @@ export default function SignupPage() {
     setIsGoogleLoading(true);
 
     try {
+      /* Firebase Implementation
       // Get the selected role from the form before signing in
       const selectedRole = formData.userType;
       console.log("Selected role before Google signup:", selectedRole);
@@ -83,7 +88,7 @@ export default function SignupPage() {
       // First sign in with Google
       const { user } = await signInWithGoogle();
       
-      // Then explicitly set the correct role based on the form selection
+      // Then explicitly set the correct role
       if (selectedRole && Object.values(ROLES).includes(selectedRole)) {
         console.log("Setting explicit role after Google signup:", selectedRole);
         await setRole(selectedRole, true);
@@ -91,27 +96,45 @@ export default function SignupPage() {
         console.log("Fallback to student role");
         await setRole(ROLES.STUDENT, true);
       }
+      */
 
-      // Redirect with a slight delay to ensure state is set
+      // Mock Implementation
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      const mockUser = {
+        email: 'mock@google.com',
+        displayName: 'Mock User',
+        role: formData.userType
+      };
+      await signup(mockUser.email, 'mock-password', mockUser.role);
+
+      /* Firebase Navigation
       setTimeout(() => {
         navigate("/redirect", { replace: true });
       }, 100);
+      */
+
+      // Mock Navigation
+      navigate("/redirect", { replace: true });
     } catch (error) {
       console.error("Google sign-up error:", error);
       
-      // Handle network errors specifically
+      /* Firebase Error Handling
       if (error.code === "auth/network-request-failed") {
         setErrors({ 
-          ...errors, 
-          general: "Network connection error. Please check your internet connection and try again."
+          general: "Network connection error. Please check your internet connection."
         });
       } else if (error.code === "auth/popup-closed-by-user") {
-        setErrors({ ...errors, general: "Sign-up was cancelled" });
+        setErrors({ general: "Sign-up was cancelled" });
       } else {
-        // Use friendly message from error handler if available
         const errorMessage = error.userMessage || error.message;
-        setErrors({ ...errors, general: `Failed to sign up with Google: ${errorMessage}` });
+        setErrors({ general: `Failed to sign up with Google: ${errorMessage}` });
       }
+      */
+
+      // Mock Error Handling
+      setErrors({ 
+        general: "Failed to sign up with Google. Please try again later." 
+      });
     } finally {
       setIsGoogleLoading(false);
     }
@@ -123,7 +146,7 @@ export default function SignupPage() {
 
     setIsLoading(true);
     try {
-      // Store selected role temporarily for AuthContext to pick up
+      /* Firebase Implementation
       localStorage.setItem("signupRole", formData.userType);
       
       const { user } = await registerUser(
@@ -134,13 +157,27 @@ export default function SignupPage() {
       );
       console.log("Setting explicit role after signup:", formData.userType);
       await setRole(formData.userType, true);
+      */
+
+      // Mock Implementation
+      await signup(formData.email, formData.password, formData.userType);
       navigate("/redirect", { replace: true });
     } catch (error) {
-      // ...existing error handling...
+      /* Firebase Error Handling
+      const errorMessage = handleAuthError(error);
+      setErrors({ general: errorMessage });
+      */
+
+      // Mock Error Handling
+      setErrors({ 
+        general: "Failed to create account. Please try again later." 
+      });
     } finally {
       setIsLoading(false);
     }
   };
+
+  
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-8">
@@ -207,26 +244,7 @@ export default function SignupPage() {
                   ))}
                 </div>
 
-                <button
-                  type="button"
-                  onClick={handleGoogleSignUp}
-                  disabled={isGoogleLoading}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 px-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all duration-300 disabled:opacity-50"
-                >
-                  {isGoogleLoading ? (
-                    <LucideLoader2 className="h-5 w-5 animate-spin" />
-                  ) : (
-                    <>
-                      <svg className="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
-                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
-                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-                      </svg>
-                      <span className="text-gray-700 font-medium">Sign up with Google</span>
-                    </>
-                  )}
-                </button>
+               
               </>
             )}
 
@@ -284,6 +302,7 @@ export default function SignupPage() {
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <Lock className="h-5 w-5 text-gray-400" />
                       </div>
+                      
                       <input
                         type={showPassword ? "text" : "password"}
                         id="password"
@@ -306,7 +325,38 @@ export default function SignupPage() {
                     {formData.password && <PasswordStrengthMeter password={formData.password} />}
                     {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password}</p>}
                   </div>
+                  <div className="relative my-6">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-gray-300"></div>
+        </div>
+        <div className="relative flex justify-center text-sm">
+          <span className="px-2 bg-white text-gray-500">Or continue with</span>
+        </div>
+      </div>
+
+      {/* Google signup button */}
+      <button
+        type="button"
+        onClick={handleGoogleSignUp}
+        disabled={isGoogleLoading}
+        className="w-full flex items-center justify-center gap-2 py-2.5 px-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all duration-300 disabled:opacity-50"
+      >
+        {isGoogleLoading ? (
+          <LucideLoader2 className="h-5 w-5 animate-spin" />
+        ) : (
+          <>
+            <svg className="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+            </svg>
+            <span className="text-gray-700 font-medium">Continue with Google</span>
+          </>
+        )}
+      </button>
                 </div>
+                
               </>
             )}
 

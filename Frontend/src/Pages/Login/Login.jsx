@@ -2,9 +2,9 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Eye, EyeOff, ArrowRight, LucideLoader2 } from "lucide-react";
-import { loginUser, signInWithGoogle } from "../../firebase/auth";
+//import { loginUser, signInWithGoogle } from "../../firebase/auth";
 import { useAuth } from "../../contexts/AuthContext";
-import Logo from "../../components/Logo";
+import DLogo from "../../components/DLogo";
 import Background from "../../components/Background";
 
 const LoginPage = () => {
@@ -15,13 +15,12 @@ const LoginPage = () => {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [error, setError] = useState("");
   const [formFocus, setFormFocus] = useState(false);
-  const { login, signInWithGoogle, setRole, currentUser, userRole } = useAuth();
+  const { login, currentUser, userRole } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const returnPath = location.state?.from || `/${userRole || 'student'}`;
 
   useEffect(() => {
-    // If user is already logged in, redirect to their dashboard or return path
     if (currentUser && userRole) {
       console.log(`User already logged in with role ${userRole}, redirecting to:`, returnPath);
       navigate(returnPath);
@@ -40,10 +39,14 @@ const LoginPage = () => {
     setIsLoading(true);
     
     try {
-      // Login - wait for this to complete
+      /* Firebase Implementation
+      const result = await loginUser(email, password);
+      await setRole(result.user.uid);
+      */
+      
+      // Mock Implementation
       await login(email, password);
       
-      // Add a short delay before navigation to ensure context is updated
       setTimeout(() => {
         console.log("Login successful, redirecting");
         navigate('/redirect', { replace: true });
@@ -51,7 +54,7 @@ const LoginPage = () => {
     } catch (err) {
       console.error("Login error:", err);
       
-      // Provide better error messages
+      /* Firebase Error Handling
       if (err.code === "auth/invalid-credential" || err.code === "auth/invalid-login-credentials") {
         setError("Invalid email or password");
       } else if (err.code === "auth/user-not-found") {
@@ -63,6 +66,10 @@ const LoginPage = () => {
       } else {
         setError("An error occurred. Please try again.");
       }
+      */
+      
+      // Mock Error Handling
+      setError("Invalid email or password");
     } finally {
       setIsLoading(false);
     }
@@ -73,40 +80,60 @@ const LoginPage = () => {
     setIsGoogleLoading(true);
     
     try {
+      /* Firebase Implementation
       await signInWithGoogle();
+      */
       
-      // Add a short delay before navigation to ensure context is updated
+      // Mock Implementation
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setError("Google sign-in temporarily disabled");
+      
+      /* Firebase Navigation
       setTimeout(() => {
         console.log("Google login successful, redirecting");
         navigate("/redirect", { replace: true });
       }, 100);
+      */
     } catch (err) {
       console.error("Google sign-in error:", err);
+      
+      /* Firebase Error Handling
       if (err.code === "auth/popup-closed-by-user") {
         setError("Sign-in was cancelled");
       } else {
         setError("Failed to sign in with Google. Please try again.");
       }
+      */
+      
+      // Mock Error Handling
+      setError("Failed to sign in with Google. Please try again.");
     } finally {
       setIsGoogleLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen relative flex items-center justify-center">
+    <div className="min-h-screen relative flex items-center justify-center py-4">
       <Background />
       
       <div className="absolute inset-0 z-0 bg-white/50 backdrop-blur-sm"></div>
       
-      <div className="relative z-10 grid md:grid-cols-2 w-full max-w-5xl bg-white rounded-2xl shadow-2xl overflow-hidden">
+      <div className="relative z-10 grid md:grid-cols-2 w-full max-w-4xl bg-white rounded-2xl shadow-2xl overflow-hidden mx-4">
         {/* Left Side - Welcome Message */}
         <div className="hidden md:flex flex-col justify-between bg-gradient-to-br from-indigo-600 to-indigo-800 p-10 text-white">
           <div>
-            <Logo light />
+            <DLogo light />
             <h1 className="text-3xl font-bold mt-12">Welcome back!</h1>
             <p className="mt-3 text-indigo-100">
               Continue your learning journey and explore new educational content.
             </p>
+            <div className="mt-8 flex justify-center">
+      <img 
+        src="/login.svg"  
+        alt="Learning Illustration" 
+        className="w-64 h-auto"
+      />
+    </div>
           </div>
           
           <div className="space-y-6">
@@ -134,7 +161,7 @@ const LoginPage = () => {
         {/* Right Side - Login Form */}
         <div className={`p-8 md:p-12 transition-all duration-300 ${formFocus ? 'bg-white' : 'bg-gray-50'}`}>
           <div className="md:hidden mb-6">
-            <Logo />
+            <DLogo />
           </div>
           
           <h2 className="text-2xl font-bold text-gray-800 mb-6">Sign in to your account</h2>
@@ -160,11 +187,13 @@ const LoginPage = () => {
               </>
             )}
           </button>
-          
-          <div className="relative flex items-center justify-center my-6">
-            <div className="border-t border-gray-300 absolute w-full"></div>
-            <div className="bg-inherit px-4 relative z-10 text-sm text-gray-500">or continue with email</div>
-          </div>
+          {/*fixed collisoin*/}
+          <div className="relative flex items-center justify-center my-8">
+  <div className="border-t border-gray-300 absolute w-full"></div>
+  <div className="bg-white px-4 relative z-10 text-sm text-gray-500"> 
+    or continue with email
+  </div>
+</div>
           
           {error && (
             <div className="mb-6 p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm animate-fadeIn">
@@ -245,14 +274,14 @@ const LoginPage = () => {
           </div>
           
           {/* Demo account info for testing */}
-          <div className="mt-8 p-4 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
+          {/* <div className="mt-8 p-4 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
             <h3 className="font-medium mb-2">Demo Accounts</h3>
             <div className="space-y-1 text-sm">
               <p><strong>Admin:</strong> admin@example.com / password</p>
               <p><strong>Instructor:</strong> instructor@example.com / password</p>
               <p><strong>Student:</strong> student@example.com / password</p>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>

@@ -70,29 +70,11 @@ const DashboardHeader = ({ userRole }) => {
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex space-x-6">
-            {links.map((link) => (
-              <Link
-                key={link.path}
-                to={link.path}
-                className={`flex items-center text-sm font-medium px-3 py-2 rounded-md transition-colors duration-200 ${
-                  isActive(link.path)
-                    ? 'text-indigo-600 bg-indigo-50'
-                    : 'text-gray-600 hover:text-indigo-600 hover:bg-indigo-50'
-                }`}
-              >
-                {link.icon}
-                <span className="ml-2">{link.name}</span>
-              </Link>
-            ))}
-          </nav>
+         
 
           {/* Right Side - User Menu & Notifications */}
           <div className="flex items-center space-x-4">
-            {/* Notifications */}
-            <button className="p-2 text-gray-500 hover:text-indigo-600 rounded-full hover:bg-indigo-50 transition-colors duration-200">
-              <Bell size={20} />
-            </button>
+           
 
             {/* User Menu */}
             <div className="relative">

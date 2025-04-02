@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { isValidRole, getDashboardPath } from '../../services/RoleManager';
+//import { isValidRole, getDashboardPath } from '../../services/RoleManager';
 
 /**
  * This component handles initial dashboard validation and routing.
@@ -15,16 +15,22 @@ const DashboardInitializer = ({ expectedRole, children }) => {
   useEffect(() => {
     // Skip if still loading auth state
     if (loading) return;
-    
+
+    /* Mock Implementation: Allow all roles for testing */
+    console.log("Mock Implementation: Skipping role validation for testing.");
+    setVerified(true);
+    return;
+
+    /* Firebase Implementation: Uncomment this block for actual role validation
     // If no user, ProtectedRoute will handle this
     if (!currentUser) return;
-    
+
     // Verify role matches the expected role for this dashboard
     if (userRole && expectedRole && userRole !== expectedRole) {
       console.warn(
         `Role mismatch: User has role "${userRole}" but is accessing "${expectedRole}" dashboard`
       );
-      
+
       // Redirect them to their correct dashboard if role is valid
       if (isValidRole(userRole)) {
         console.log(`Redirecting to proper dashboard: /${userRole}`);
@@ -32,9 +38,10 @@ const DashboardInitializer = ({ expectedRole, children }) => {
         return;
       }
     }
-    
+
     // Role matches expected role, consider verification complete
     setVerified(true);
+    */
   }, [currentUser, userRole, expectedRole, loading, navigate]);
 
   // Show minimal loading UI while verifying

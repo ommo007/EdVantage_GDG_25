@@ -32,3 +32,4 @@ logs/
 # Node modules
 node_modules/
 Frontend/node_modules/
+.qodo
