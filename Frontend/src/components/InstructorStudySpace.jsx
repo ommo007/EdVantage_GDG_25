@@ -18,7 +18,8 @@ import {
   ArrowLeft, 
   BookOpen,
   Database,
-  Upload
+  Upload,
+  Trash
 } from "lucide-react"
 import Whiteboard from "./Whiteboard"
 import Logo from "./Logo"
@@ -61,6 +62,10 @@ const StudyPage = () => {
       };
       setStudyMaterials((prev) => [...prev, newMaterial]); // Update the state
     }
+  };
+
+  const handleDeleteMaterial = (id) => {
+    setStudyMaterials((prev) => prev.filter((material) => material.id !== id)); // Remove the material by ID
   };
 
   const handleGoBack = () => {

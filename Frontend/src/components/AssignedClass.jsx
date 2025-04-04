@@ -84,7 +84,7 @@ const AssignedClass = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
-
+  const [selectedSubject, setSelectedSubject] = useState(""); // Add this state
   useEffect(() => {
     fetchClassroomData();
   }, [classId]);
@@ -143,7 +143,7 @@ const AssignedClass = () => {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
             <div>
               <div className="flex items-center">
-                <Link to="/assigned-classes" className="text-indigo-600 hover:text-indigo-800 mr-2">
+                <Link to="/instructor" className="text-indigo-600 hover:text-indigo-800 mr-2">
                   <ArrowRight className="h-5 w-5 transform rotate-180" />
                 </Link>
                 <h1 className="text-3xl font-bold text-indigo-900">
@@ -153,6 +153,21 @@ const AssignedClass = () => {
               <p className="text-indigo-600 mt-2">
                 {classData.subjects.join(', ')} • {classData.studentCount} Students
               </p>
+              {/* Subject Dropdown */}
+<div className="mt-2">
+  <select
+    value={selectedSubject}
+    onChange={(e) => setSelectedSubject(e.target.value)} // Update the selected subject
+    className="px-3 py-2 border border-indigo-300 rounded-md text-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+  >
+    <option value="">Select Subject</option>
+    {classData.subjects.map((subject, index) => (
+      <option key={index} value={subject}>
+        {subject}
+      </option>
+    ))}
+  </select>
+</div>
             </div>
             <div className="flex items-center space-x-4">
               <button
@@ -163,12 +178,22 @@ const AssignedClass = () => {
                 Announcements
               </button>
               <button
-  className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition duration-300 flex items-center"
-  onClick={() => navigate(`/instructor/class/${classId}/study-space`)} // Corrected path
+  className={`bg-indigo-600 text-white px-4 py-2 rounded-md transition duration-300 flex items-center ${
+    !selectedSubject ? 'opacity-50 cursor-not-allowed' : 'hover:bg-indigo-700'
+  }`}
+  onClick={() => {
+    if (selectedSubject) {
+      // Navigate to the selected subject's study space
+      navigate(`/instructor/class/${classData.id}/study-space/${selectedSubject}`);
+    } else {
+      alert('Please select a subject to proceed to the study space.');
+    }
+  }}
+  disabled={!selectedSubject} // Disable the button if no subject is selected
 >
-                <LogOut className="h-4 w-4 mr-2" />
-                Go to Study Space
-              </button>
+  <LogOut className="h-4 w-4 mr-2" />
+  Enter Classroom
+</button>
             </div>
           </div>
 

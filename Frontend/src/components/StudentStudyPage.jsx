@@ -11,37 +11,32 @@ import {
   Edit, 
   Menu, 
   Settings, 
-  Grid, 
-  PanelRight, 
-  Code, 
-  Table, 
-  ArrowLeft, 
-  BookOpen,
+  BookOpen, 
+  ArrowLeft,
+  PanelRight,
   Database
 } from "lucide-react"
 import Whiteboard from "./Whiteboard"
 import Logo from "./Logo"
 import RagStudyAssistant from "./study/RagStudyAssistant"
 
-const StudyPage = () => {
+const StudentStudySpace = () => {
   const [selectedDay, setSelectedDay] = useState(1) // Default to day 1
   const [selectedTool, setSelectedTool] = useState('video')
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const [isToolbarOpen, setIsToolbarOpen] = useState(true)
   const [messages, setMessages] = useState([
-    { id: 1, text: "Hello, I need help with my math homework.", sender: "user" },
-    { id: 2, text: "Of course! I'd be happy to help. What specific topic in math are you working on?", sender: "bot" },
+    { id: 1, text: "Welcome to your study space! How can I help you today?", sender: "bot" },
   ])
   const [inputMessage, setInputMessage] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [videoUrl, setVideoUrl] = useState("")
   const [isWhiteboardOpen, setIsWhiteboardOpen] = useState(false)
-  const [activeTab, setActiveTab] = useState('workspace')
   const [useRagAssistant, setUseRagAssistant] = useState(false)
-
+  
   const navigate = useNavigate()
   const { classId } = useParams()
-  const userRole = localStorage.getItem("userRole") || "student"
+  const userRole = "student"
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -71,7 +66,7 @@ const StudyPage = () => {
       setTimeout(() => {
         const botMessage = {
           id: messages.length + 2,
-          text: "Here is a helpful video: https://www.youtube.com/watch?v=i35AUg11hvo", // Example link
+          text: "Here is a helpful lecture: https://www.youtube.com/watch?v=i35AUg11hvo", // Example link
           sender: "bot",
         }
         setMessages((prev) => [...prev, botMessage])
@@ -124,31 +119,13 @@ const StudyPage = () => {
               Back to Dashboard
             </button>
             
-            <button
-              onClick={() => setActiveTab('workspace')}
-              className={`px-4 py-2 ${activeTab === 'workspace' ? 'bg-indigo-100 text-indigo-800' : 'text-indigo-600'} rounded-md hover:bg-indigo-50`}
-            >
-              Workspace
-            </button>
-            <button
-              onClick={() => setActiveTab('editor')}
-              className={`px-4 py-2 ${activeTab === 'editor' ? 'bg-indigo-100 text-indigo-800' : 'text-indigo-600'} rounded-md hover:bg-indigo-50`}
-            >
-              Editor
-            </button>
-            <button
-              onClick={() => setActiveTab('variables')}
-              className={`px-4 py-2 ${activeTab === 'variables' ? 'bg-indigo-100 text-indigo-800' : 'text-indigo-600'} rounded-md hover:bg-indigo-50`}
-            >
-              Variables
-            </button>
             <div className="relative">
               <button
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                 className="flex items-center space-x-2 text-indigo-700 hover:text-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 rounded-md transition duration-300"
               >
                 <User className="h-5 w-5" />
-                <span>{userRole.charAt(0).toUpperCase() + userRole.slice(1)}</span>
+                <span>Student</span>
                 <ChevronDown
                   className={`h-4 w-4 transform transition-transform duration-200 ${isUserMenuOpen ? "rotate-180" : ""}`}
                 />
@@ -177,56 +154,47 @@ const StudyPage = () => {
         </nav>
       </header>
 
-      {/* Secondary Toolbar for Tools (MATLAB-style) */}
+      {/* Secondary Toolbar for Tools */}
       <div className="bg-indigo-50 border-b border-indigo-100 py-1 px-4">
         <div className="flex items-center space-x-2">
-          <button 
+          {/* Sidebar Toggle */}
+          <button
             onClick={() => setIsToolbarOpen(!isToolbarOpen)}
             className="p-1.5 hover:bg-indigo-100 rounded-md transition duration-300"
           >
             <Menu className="h-5 w-5 text-indigo-600" />
           </button>
-          <button 
+
+          {/* Lecture Viewer */}
+          <button
             onClick={() => setSelectedTool('video')}
             className={`p-2 rounded-md ${selectedTool === 'video' ? 'bg-indigo-200' : 'hover:bg-indigo-100'}`}
           >
             <BookOpen className="h-5 w-5 text-indigo-600" />
           </button>
-          <button 
+
+          {/* Whiteboard */}
+          <button
             onClick={toggleWhiteboard}
             className={`p-2 rounded-md ${selectedTool === 'whiteboard' ? 'bg-indigo-200' : 'hover:bg-indigo-100'}`}
           >
             <Edit className="h-5 w-5 text-indigo-600" />
           </button>
-          <button 
-            className="p-2 rounded-md hover:bg-indigo-100"
-          >
-            <Table className="h-5 w-5 text-indigo-600" />
-          </button>
-          <button 
-            className="p-2 rounded-md hover:bg-indigo-100"
-          >
-            <Grid className="h-5 w-5 text-indigo-600" />
-          </button>
-          <button 
-            className="p-2 rounded-md hover:bg-indigo-100"
-          >
-            <Code className="h-5 w-5 text-indigo-600" />
-          </button>
-          <div className="h-8 border-r border-indigo-200 mx-1"></div>
-          <button 
+
+          {/* RAG Assistant */}
+          <button
             onClick={toggleRagAssistant}
             className={`p-2 rounded-md ${useRagAssistant ? 'bg-teal-200' : 'hover:bg-indigo-100'}`}
-            title="AI Study Assistant (RAG)"
+            title="AI Study Assistant"
           >
             <Database className="h-5 w-5 text-teal-600" />
           </button>
         </div>
       </div>
 
-      {/* Main Content Area with MATLAB-style layout */}
+      {/* Main Content Area */}
       <div className="flex flex-1 h-[calc(100vh-92px)]">
-        {/* Left Sidebar - File Browser (like MATLAB's Current Folder) */}
+        {/* Left Sidebar - Study Plan */}
         {isToolbarOpen && (
           <aside className="w-64 bg-white border-r border-indigo-100 flex flex-col">
             <div className="p-3 border-b border-indigo-100">
@@ -236,14 +204,14 @@ const StudyPage = () => {
               <div className="space-y-1">
                 {[1, 2, 3, 4, 5].map((day) => (
                   <button
-                  key={day}
-                  onClick={() => setSelectedDay(day)}
-                  className={`w-full flex items-center px-3 py-2 rounded-md transition duration-300 ${
-                    selectedDay === day 
-                      ? 'bg-indigo-100 text-indigo-800' 
-                      : 'text-indigo-600 hover:bg-indigo-50'
-                  }`}
-                >
+                    key={day}
+                    onClick={() => setSelectedDay(day)}
+                    className={`w-full flex items-center px-3 py-2 rounded-md transition duration-300 ${
+                      selectedDay === day 
+                        ? 'bg-indigo-100 text-indigo-800' 
+                        : 'text-indigo-600 hover:bg-indigo-50'
+                    }`}
+                  >
                     <Calendar className="w-4 h-4 min-w-[16px]" />
                     <span className="ml-2">Day {day}</span>
                   </button>
@@ -253,48 +221,39 @@ const StudyPage = () => {
           </aside>
         )}
 
-        {/* Main Center Panel (Workspace/Editor) - like MATLAB's central panel */}
+        {/* Main Center Panel - Lecture Space */}
         <div className="flex-1 flex flex-col">
           {/* Workspace Area */}
-          <div className="flex-1 p-4 overflow-y-auto">
-            <div className="mb-2">
-              <h2 className="text-xl font-bold text-indigo-900">{selectedTool === 'whiteboard' ? 'Interactive Whiteboard' : 'Lecture Viewer'}</h2>
-            </div>
-            <div className="bg-white rounded-lg shadow-sm border border-indigo-100 p-4 h-[calc(100vh-180px)]">
-              {selectedTool === 'whiteboard' ? (
-                <Whiteboard />
-              ) : (
-                <div className="h-full flex items-center justify-center">
-                  {videoUrl ? (
-                    <iframe
-                      width="100%"
-                      height="100%"
-                      src={videoUrl.replace("watch?v=", "embed/") + "?rel=0"}
-                      title="YouTube video player"
-                      frameBorder="0"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                    ></iframe>
-                  ) : (
-                    <p className="text-indigo-600">Select a lecture to begin</p>
-                  )}
-                </div>
-              )}
-            </div>
+          <div className="p-1 bg-white">
+            <h1 className="text-xl font-bold text-indigo-900">
+              {selectedTool === 'video' && 'Lecture Space'}
+              {selectedTool === 'whiteboard' && 'Study Notes'}
+            </h1>
           </div>
-          
-          {/* Command Window (MATLAB-style command line/console) */}
-          <div className="h-32 border-t border-indigo-100 bg-indigo-50 p-2 flex flex-col">
-            <div className="text-xs text-indigo-700 mb-1 font-medium">Command Window</div>
-            <div className="flex-1 bg-white rounded border border-indigo-200 p-2 text-sm font-mono overflow-y-auto">
-              <div className="text-indigo-800">{'>> '}<span className="text-indigo-600">loadLecture(Day1)</span></div>
-              <div className="text-indigo-800">{'>> '}<span className="text-indigo-600">plotConcepts(&apos;algebra&apos;)</span></div>
-              <div className="text-gray-500">Click to run commands or type below...</div>
-            </div>
+          <div className="flex-1 p-4 overflow-y-auto">
+            {selectedTool === 'video' && (
+              <div className="h-full flex items-center justify-center">
+                {videoUrl ? (
+                  <iframe
+                    width="100%"
+                    height="100%"
+                    src={videoUrl.replace("watch?v=", "embed/") + "?rel=0"}
+                    title="Lecture Video Player"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  ></iframe>
+                ) : (
+                  <p className="text-indigo-600">Select a lecture from your study plan or ask the assistant for help</p>
+                )}
+              </div>
+            )}
+
+            {selectedTool === 'whiteboard' && <Whiteboard />}
           </div>
         </div>
 
-        {/* Right Panel - Conditionally render either the Chat Assistant or RAG Assistant */}
+        {/* Right Panel - AI Assistant */}
         <div className="w-80 border-l border-indigo-100 bg-white flex flex-col">
           {useRagAssistant ? (
             <RagStudyAssistant />
@@ -302,7 +261,7 @@ const StudyPage = () => {
             <>
               {/* Chat Header */}
               <div className="flex-none p-3 border-b border-indigo-100 flex justify-between items-center">
-                <h3 className="font-medium text-indigo-800">AI Assistant</h3>
+                <h3 className="font-medium text-indigo-800">Study Assistant</h3>
                 <button className="p-1 hover:bg-indigo-50 rounded">
                   <PanelRight className="h-4 w-4 text-indigo-600" />
                 </button>
@@ -342,7 +301,7 @@ const StudyPage = () => {
                     value={inputMessage}
                     onChange={(e) => setInputMessage(e.target.value)}
                     onKeyPress={handleKeyPress}
-                    placeholder="Ask the AI assistant..."
+                    placeholder="Ask for help with your studies..."
                     rows="1"
                     className="flex-1 px-3 py-2 border border-indigo-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none bg-indigo-50/30 placeholder-indigo-400 text-sm"
                   />
@@ -363,4 +322,4 @@ const StudyPage = () => {
   )
 }
 
-export default StudyPage
+export default StudentStudySpace

@@ -27,18 +27,12 @@ export default function LandingPage() {
               <>
                 <Link
                   to="/login"
-                  className="text-indigo-600 px-6 py-2.5 hover:text-indigo-800 transition duration-300 font-medium flex items-center"
+                   className="bg-indigo-600 text-white px-6 py-2.5 rounded-md hover:bg-indigo-700 transition duration-300 font-medium flex items-center"
                 >
                   <LogIn className="mr-2 h-4 w-4" />
-                  Log In
+                  Sign In
                 </Link>
-                <Link
-                  to="/signup"
-                  className="bg-indigo-600 text-white px-6 py-2.5 rounded-md hover:bg-indigo-700 transition duration-300 font-medium flex items-center"
-                >
-                  <UserPlus className="mr-2 h-4 w-4" />
-                  Sign Up
-                </Link>
+                
               </>
             )}
           </div>

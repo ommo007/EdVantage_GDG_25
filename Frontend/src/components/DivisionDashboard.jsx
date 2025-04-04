@@ -95,14 +95,15 @@ const DivisionDashboard = () => {
     try {
       setIsLoading(true);
       // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+  
       const divisionData = mockDivisionDetails[divisionId];
       if (!divisionData || divisionData.standardId.toString() !== standardId.toString()) {
+        alert("Division not found. Redirecting to standard dashboard.");
         navigate(`/admin/standard/${standardId}`);
         return;
       }
-      
+  
       setDivision(divisionData);
       setStudents(mockStudents[divisionId] || []);
       setTeachers(mockTeachers[divisionId] || []);

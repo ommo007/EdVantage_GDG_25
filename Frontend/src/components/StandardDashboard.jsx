@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Link, useParams, useNavigate } from "react-router-dom";
+import { Link, useParams, useNavigate ,useLocation} from "react-router-dom";
 import {
   Layers,
   Users,
@@ -85,27 +85,25 @@ const StandardDashboard = () => {
       alert("Division name is required.");
       return;
     }
-
-    if (newDivision.id) {
-      // Edit existing division
-      setDivisions(
-        divisions.map((division) =>
-          division.id === newDivision.id ? { ...division, ...newDivision } : division
-        )
-      );
-    } else {
-      // Create new division
-      const newDivisionData = {
-        id: divisions.length + 1,
-        name: newDivision.name,
-        students: newDivision.students || 0,
-        teachers: newDivision.teachers || 0,
-        courses: newDivision.courses || 0,
-        status: "active",
-      };
-      setDivisions([...divisions, newDivisionData]);
+  
+    const newDivisionData = {
+      id: divisions.length > 0 ? Math.max(...divisions.map((d) => d.id)) + 1 : 1, // Ensure unique ID
+      name: newDivision.name,
+      students: newDivision.students || 0,
+      teachers: newDivision.teachers || 0,
+      courses: newDivision.courses || 0,
+      status: "active",
+    };
+  
+    // Update the divisions state
+    setDivisions([...divisions, newDivisionData]);
+  
+    // Dynamically update the mockDivisions object
+    if (!mockDivisions[standardId]) {
+      mockDivisions[standardId] = [];
     }
-
+    mockDivisions[standardId].push(newDivisionData);
+  
     setNewDivision({ id: null, name: "", students: null, teachers: null, courses: null });
     setIsModalOpen(false);
   };
@@ -125,7 +123,13 @@ const StandardDashboard = () => {
   };
 
   const handleManageDivision = (divisionId) => {
-    navigate(`/admin/${standardId}/divisions/${divisionId}`);
+    const division = divisions.find((d) => d.id === divisionId);
+    console.log("Navigating to division:", division);
+    if (division) {
+      navigate(`/admin/${standardId}/divisions/${divisionId}`, { state: { division } });
+    } else {
+      alert("Division not found.");
+    }
   };
 
   const filteredDivisions = divisions.filter((division) =>
@@ -142,6 +146,8 @@ const StandardDashboard = () => {
       </div>
     );
   }
+
+  
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-white">
