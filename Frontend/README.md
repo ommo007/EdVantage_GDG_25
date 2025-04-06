@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 🔗 Useful Links
 📌 GitHub Repository: EdVantage_GDG_25
 📌 Live Demo (Coming Soon!)
@@ -13,6 +14,8 @@ git clone https://github.com/ommo007/EdVantage_GDG_25.git
 npm install   # Install dependencies
 npm run dev   # Start the development server
 
+=======
+>>>>>>> ef34c5d (Frontend,Backend)
 # React + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.

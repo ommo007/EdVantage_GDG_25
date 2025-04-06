@@ -1,0 +1,8 @@
+flask
+flask_cors
+uvicorn
+pydantic
+python-dotenv
+google-genai
+gunicorn==23.0.0 
+tavily-python
