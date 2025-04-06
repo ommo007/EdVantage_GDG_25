@@ -138,12 +138,11 @@ To run this project locally:
 
 ## ✨ MVP Screenshots
 
-*(Consider adding screenshots from Slide 8 here)*
 
-![MVP - AI Assistant Text Response](<link_or_path_to_screenshot_1.png>)
+![MVP - AI Assistant Text Response](<screenshots/Screenshot1.png>)
 *Caption: AI Assistant providing text-based help for adding fractions.*
 
-![MVP - AI Assistant Video Suggestion](<link_or_path_to_screenshot_2.png>)
+![MVP - AI Assistant Video Suggestion](<screenshots/Screenshot2.png>)
 *Caption: AI Assistant suggesting relevant YouTube videos based on student request.*
 
 ---
