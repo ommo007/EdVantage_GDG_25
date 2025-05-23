@@ -58,7 +58,7 @@ const LoginPage = () => {
 
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
-        .select("role")
+        .select("role_id")
         .eq("user_id", userId)
         .single();
 
@@ -66,14 +66,14 @@ const LoginPage = () => {
         throw profileError;
       }
 
-      switch (profileData.role) {
-        case "admin":
+      switch (profileData.role_id) {
+        case 1:
           navigate("/admin", { replace: true });
           break;
-        case "instructor":
+        case 2:
           navigate("/instructor", { replace: true });
           break;
-        case "student":
+        case 3:
           navigate("/student", { replace: true });
           break;
         default:
