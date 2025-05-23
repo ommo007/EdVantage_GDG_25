@@ -287,8 +287,8 @@ const LoginPage = () => {
               </div>
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="text-xs font-medium text-amber-700 bg-amber-100 px-2 py-1 rounded">Instructor</span>
-                  <div className="text-xs text-gray-600 mt-1">instructor@demo.com / teacher123</div>
+                  <span className="text-xs font-medium text-amber-700 bg-amber-100 px-2 py-1 rounded">teacher</span>
+                  <div className="text-xs text-gray-600 mt-1">teacher@demo.com / teacher123</div>
                 </div>
                 <button
                   onClick={() => fillCredentials("instructor")}
