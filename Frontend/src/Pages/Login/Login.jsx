@@ -58,7 +58,7 @@ const LoginPage = () => {
 
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
-        .select("role")
+        .select("role_id")
         .eq("user_id", userId)
         .single();
 
@@ -66,14 +66,14 @@ const LoginPage = () => {
         throw profileError;
       }
 
-      switch (profileData.role) {
-        case "admin":
+      switch (profileData.role_id) {
+        case 1:
           navigate("/admin", { replace: true });
           break;
-        case "instructor":
+        case 2:
           navigate("/instructor", { replace: true });
           break;
-        case "student":
+        case 3:
           navigate("/student", { replace: true });
           break;
         default:
@@ -116,8 +116,8 @@ const LoginPage = () => {
         setEmail("admin@demo.com");
         setPassword("admin123");
         break;
-      case "instructor":
-        setEmail("instructor@demo.com");
+      case "teacher":
+        setEmail("teacher@demo.com");
         setPassword("teacher123");
         break;
       case "student":
@@ -287,11 +287,11 @@ const LoginPage = () => {
               </div>
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="text-xs font-medium text-amber-700 bg-amber-100 px-2 py-1 rounded">Instructor</span>
-                  <div className="text-xs text-gray-600 mt-1">instructor@demo.com / teacher123</div>
+                  <span className="text-xs font-medium text-amber-700 bg-amber-100 px-2 py-1 rounded">teacher</span>
+                  <div className="text-xs text-gray-600 mt-1">teacher@demo.com / teacher123</div>
                 </div>
                 <button
-                  onClick={() => fillCredentials("instructor")}
+                  onClick={() => fillCredentials("teacher")}
                   className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
                 >
                   Use
