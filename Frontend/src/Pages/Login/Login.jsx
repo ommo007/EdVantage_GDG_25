@@ -116,8 +116,8 @@ const LoginPage = () => {
         setEmail("admin@demo.com");
         setPassword("admin123");
         break;
-      case "instructor":
-        setEmail("instructor@demo.com");
+      case "teacher":
+        setEmail("teacher@demo.com");
         setPassword("teacher123");
         break;
       case "student":
