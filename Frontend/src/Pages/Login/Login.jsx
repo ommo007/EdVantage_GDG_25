@@ -291,7 +291,7 @@ const LoginPage = () => {
                   <div className="text-xs text-gray-600 mt-1">teacher@demo.com / teacher123</div>
                 </div>
                 <button
-                  onClick={() => fillCredentials("instructor")}
+                  onClick={() => fillCredentials("teacher")}
                   className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
                 >
                   Use
