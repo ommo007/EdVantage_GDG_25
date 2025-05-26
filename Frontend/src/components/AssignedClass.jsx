@@ -2,25 +2,15 @@ import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
   Users,
-  Calendar,
   ArrowRight,
   BookOpen,
-  FilePlus,
   Activity,
   CheckCircle,
-  Clock,
-  GraduationCap,
-  Database,
-  FileText,
   UserCheck,
   Award,
-  PieChart,
-  MessageSquare,
-  BarChart2,
-  Upload,
   Bell,
   LogOut,
-  Brain,
+  
 } from 'lucide-react';
 
 import DashboardHeader from './shared/DashboardHeader';
@@ -153,20 +143,34 @@ const AssignedClass = () => {
               <p className="text-indigo-600 mt-2">
                 {classData.subjects.join(', ')} • {classData.studentCount} Students
               </p>
-              {/* Subject Dropdown */}
-<div className="mt-2">
+ {/* Enhanced Subject Dropdown */}
+<div className="mt-2 relative group">
   <select
     value={selectedSubject}
-    onChange={(e) => setSelectedSubject(e.target.value)} // Update the selected subject
-    className="px-3 py-2 border border-indigo-300 rounded-md text-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+    onChange={(e) => setSelectedSubject(e.target.value)}
+    className="w-full appearance-none px-4 py-3 bg-gradient-to-r from-white to-indigo-50 border-2 border-indigo-200 rounded-lg text-indigo-700 font-medium shadow-sm hover:shadow-md hover:border-indigo-300 focus:outline-none focus:ring-3 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all duration-300 ease-in-out cursor-pointer"
   >
-    <option value="">Select Subject</option>
+    <option value="" disabled className="text-gray-500 font-normal">
+      📚 Select Subject
+    </option>
     {classData.subjects.map((subject, index) => (
-      <option key={index} value={subject}>
+      <option key={index} value={subject} className="text-indigo-700 font-medium py-2">
         {subject}
       </option>
     ))}
   </select>
+  
+  {/* Custom dropdown arrow with animation */}
+  <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+    <svg 
+      className="w-5 h-5 text-indigo-500 group-hover:text-indigo-600 transition-all duration-300 group-focus-within:rotate-180" 
+      fill="none" 
+      stroke="currentColor" 
+      viewBox="0 0 24 24"
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+    </svg>
+  </div>
 </div>
             </div>
             <div className="flex items-center space-x-4">

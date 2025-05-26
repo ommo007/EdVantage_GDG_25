@@ -212,25 +212,41 @@ const handleSubjectChange = (e) => {
             </h1>
           </div>
 
-          {/* Teacher name and Subject dropdown */}
-          <div className="flex items-center mt-2 text-indigo-700">
-            <User className="h-5 w-5 mr-2" />
-            <span className="mr-4 font-medium">{classData.teacher.name}</span>
+        {/* Teacher name and Subject dropdown */}
+              <div className="flex items-center mt-2 text-indigo-700">
+                <User className="h-5 w-5 mr-2" />
+                <span className="mr-4 font-medium">{classData.teacher.name}</span>
+                {/* Updated Student Subject Dropdown */}
+                <div className="mt-2 relative group">
+  <select
+    value={selectedSubject}
+    onChange={(e) => setSelectedSubject(e.target.value)}
+    className="w-full appearance-none pl-4 pr-10 py-3 bg-gradient-to-r from-white to-indigo-50 border-2 border-indigo-200 rounded-lg text-indigo-700 font-medium shadow-sm hover:shadow-md hover:border-indigo-300 focus:outline-none focus:ring-3 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all duration-300 ease-in-out cursor-pointer"
+  >
+    <option value="" disabled className="text-gray-500 font-normal">
+      📚 Select Subject
+    </option>
+    {classData.subjects.map((subject, index) => (
+      <option key={index} value={subject.id} className="text-indigo-700 font-medium py-2">
+        {subject.name}
+      </option>
+    ))}
+  </select>
 
-            <select
-              value={selectedSubject}
-              onChange={(e) => setSelectedSubject(e.target.value)}
-              className="px-3 py-2 border border-indigo-300 rounded-md text-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              <option value="">Select Subject</option>
-              {classData.subjects.map((subject) => (
-                <option key={subject.id} value={subject.id}>
-                  {subject.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+  {/* Custom dropdown arrow */}
+  <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+    <svg 
+      className="w-5 h-5 text-indigo-500 group-hover:text-indigo-600 transition-all duration-300 group-focus-within:rotate-180" 
+      fill="none" 
+      stroke="currentColor" 
+      viewBox="0 0 24 24"
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+    </svg>
+  </div>
+</div>
+              </div>
+            </div>
 
         {/* Right Side - Enter Classroom Button */}
         <button

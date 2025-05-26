@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Link, useParams, useNavigate ,useLocation} from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { Link, useParams, useNavigate, useLocation } from "react-router-dom";
 import {
   Layers,
   Users,
@@ -13,6 +13,7 @@ import {
   Trash,
   School,
   UserPlus,
+  X,
 } from "lucide-react";
 
 import DashboardHeader from "./shared/DashboardHeader";
@@ -95,7 +96,26 @@ const StandardDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [activeActionMenu, setActiveActionMenu] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newDivision, setNewDivision] = useState({ id: null, name: "", students: null, teachers: null, courses: null });
+  const [newDivision, setNewDivision] = useState({ 
+    id: null, 
+    name: "", 
+    students: "", 
+    teachers: "", 
+    courses: "" 
+  });
+  const [errors, setErrors] = useState({});
+
+  // Only lock scroll when modal is open
+  useEffect(() => {
+    if (isModalOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isModalOpen]);
 
   useEffect(() => {
     fetchStandardData();
@@ -129,56 +149,103 @@ const StandardDashboard = () => {
     setActiveActionMenu(activeActionMenu === divisionId ? null : divisionId);
   };
 
-  const handleCreateDivision = () => {
+  const validateForm = () => {
+    const newErrors = {};
+    
     if (!newDivision.name.trim()) {
-      alert("Division name is required.");
+      newErrors.name = "Division name is required";
+    }
+    
+    if (newDivision.students !== "" && (isNaN(newDivision.students) || parseInt(newDivision.students) < 0)) {
+      newErrors.students = "Students must be a valid number";
+    }
+    
+    if (newDivision.teachers !== "" && (isNaN(newDivision.teachers) || parseInt(newDivision.teachers) < 0)) {
+      newErrors.teachers = "Teachers must be a valid number";
+    }
+    
+    if (newDivision.courses !== "" && (isNaN(newDivision.courses) || parseInt(newDivision.courses) < 0)) {
+      newErrors.courses = "Courses must be a valid number";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleCreateOrUpdateDivision = () => {
+    if (!validateForm()) {
       return;
     }
-  
-    const newDivisionData = {
-      id: divisions.length > 0 ? Math.max(...divisions.map((d) => d.id)) + 1 : 1, // Ensure unique ID
-      name: newDivision.name,
-      students: newDivision.students || 0,
-      teachers: newDivision.teachers || 0,
-      courses: newDivision.courses || 0,
+
+    const divisionData = {
+      id: newDivision.id || (divisions.length > 0 ? Math.max(...divisions.map((d) => d.id)) + 1 : 1),
+      name: newDivision.name.trim(),
+      students: parseInt(newDivision.students) || 0,
+      teachers: parseInt(newDivision.teachers) || 0,
+      courses: parseInt(newDivision.courses) || 0,
       status: "active",
     };
-  
-    // Update the divisions state
-    setDivisions([...divisions, newDivisionData]);
-  
-    // Dynamically update the mockDivisions object
-    if (!mockDivisions[standardId]) {
-      mockDivisions[standardId] = [];
+
+    if (newDivision.id) {
+      // Update existing division
+      setDivisions(divisions.map(d => d.id === divisionData.id ? divisionData : d));
+      // Update mockDivisions
+      const index = mockDivisions[standardId].findIndex(d => d.id === divisionData.id);
+      if (index !== -1) {
+        mockDivisions[standardId][index] = divisionData;
+      }
+    } else {
+      // Create new division
+      setDivisions([...divisions, divisionData]);
+      // Update mockDivisions
+      if (!mockDivisions[standardId]) {
+        mockDivisions[standardId] = [];
+      }
+      mockDivisions[standardId].push(divisionData);
     }
-    mockDivisions[standardId].push(newDivisionData);
-  
-    setNewDivision({ id: null, name: "", students: null, teachers: null, courses: null });
+
+    resetModal();
+  };
+
+  const resetModal = () => {
+    setNewDivision({ id: null, name: "", students: "", teachers: "", courses: "" });
+    setErrors({});
     setIsModalOpen(false);
   };
 
   const handleEditDivision = (divisionId) => {
     const divisionToEdit = divisions.find((division) => division.id === divisionId);
     if (divisionToEdit) {
-      setNewDivision(divisionToEdit); // Populate the modal with the division's data
-      setIsModalOpen(true); // Open the modal for editing
+      setNewDivision({
+        ...divisionToEdit,
+        students: divisionToEdit.students.toString(),
+        teachers: divisionToEdit.teachers.toString(),
+        courses: divisionToEdit.courses.toString(),
+      });
+      setIsModalOpen(true);
+      setActiveActionMenu(null);
     }
   };
 
   const handleDeleteDivision = (divisionId) => {
     if (window.confirm("Are you sure you want to delete this division?")) {
       setDivisions(divisions.filter((division) => division.id !== divisionId));
+      // Update mockDivisions
+      if (mockDivisions[standardId]) {
+        mockDivisions[standardId] = mockDivisions[standardId].filter(d => d.id !== divisionId);
+      }
+      setActiveActionMenu(null);
     }
   };
 
   const handleManageDivision = (divisionId) => {
     const division = divisions.find((d) => d.id === divisionId);
-    console.log("Navigating to division:", division);
     if (division) {
       navigate(`/admin/${standardId}/divisions/${divisionId}`, { state: { division } });
     } else {
       alert("Division not found.");
     }
+    setActiveActionMenu(null);
   };
 
   const filteredDivisions = divisions.filter((division) =>
@@ -196,248 +263,303 @@ const StandardDashboard = () => {
     );
   }
 
-  
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-white">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-white flex flex-col">
       <DashboardHeader userRole="admin" />
 
-      <main className="container mx-auto px-4 py-8">
-        {/* Header with navigation */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
-          <div>
-            <div className="flex items-center">
-              <Link to="/admin" className="mr-4 text-indigo-600 hover:text-indigo-800">
-                <ChevronLeft className="h-6 w-6" />
-              </Link>
-              <h1 className="text-3xl font-bold text-indigo-900">{standard.name}</h1>
-            </div>
-            <p className="text-indigo-600 mt-2 ml-10">Manage divisions, students and teachers</p>
-          </div>
-          <div className="flex items-center mt-4 md:mt-0">
-            <SearchBar
-              placeholder="Search divisions..."
-              value={searchTerm}
-              onChange={setSearchTerm}
-            />
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="ml-4 bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition duration-300 font-medium flex items-center"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Create Division
-            </button>
-          </div>
-        </div>
-
-        {/* Summary Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <StatCard
-            icon={<Layers className="h-6 w-6 text-indigo-600" />}
-            title="Total Divisions"
-            value={divisions.length}
-            bgColor="bg-indigo-100"
-            textColor="text-indigo-700"
-          />
-
-          <StatCard
-            icon={<Users className="h-6 w-6 text-purple-600" />}
-            title="Total Students"
-            value={totalStudents}
-            bgColor="bg-purple-100"
-            textColor="text-purple-700"
-          />
-
-          <StatCard
-            icon={<UserPlus className="h-6 w-6 text-blue-600" />}
-            title="Assigned Teachers"
-            value={totalTeachers}
-            bgColor="bg-blue-100"
-            textColor="text-blue-700"
-          />
-        </div>
-
-        {/* Divisions Table */}
-        <div className="bg-white rounded-xl shadow-sm border border-indigo-100 p-6 mb-8">
-          <div className="flex items-center mb-6">
-            <School className="h-6 w-6 text-indigo-600 mr-3" />
-            <h2 className="text-xl font-bold text-indigo-900">Divisions</h2>
-          </div>
-
-          {filteredDivisions.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="text-indigo-400 mb-4">
-                <Layers className="h-12 w-12 mx-auto" />
+      <div className="flex-1 overflow-hidden flex flex-col min-h-0">
+        <main className="container mx-auto px-4 py-8 h-full flex-1 flex flex-col min-h-0">
+          {/* Header with navigation */}
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+            <div>
+              <div className="flex items-center">
+                <Link to="/admin" className="mr-4 text-indigo-600 hover:text-indigo-800 transition-colors">
+                  <ChevronLeft className="h-6 w-6" />
+                </Link>
+                <h1 className="text-3xl font-bold text-indigo-900">{standard.name}</h1>
               </div>
-              <h3 className="text-xl font-medium text-indigo-800 mb-2">No divisions found</h3>
-              <p className="text-indigo-600 mb-6">Start by creating divisions for this standard</p>
+              <p className="text-indigo-600 mt-2 ml-10">Manage divisions, students and teachers</p>
+            </div>
+            <div className="flex items-center mt-4 md:mt-0 gap-4">
+              <SearchBar
+                placeholder="Search divisions..."
+                value={searchTerm}
+                onChange={setSearchTerm}
+              />
               <button
                 onClick={() => setIsModalOpen(true)}
-                className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition duration-300 font-medium inline-flex items-center"
+                className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition duration-300 font-medium flex items-center whitespace-nowrap"
               >
                 <Plus className="mr-2 h-4 w-4" />
                 Create Division
               </button>
             </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-indigo-100">
-                <thead className="bg-indigo-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-indigo-500 uppercase tracking-wider">
-                      Division Name
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-indigo-500 uppercase tracking-wider">
-                      Students
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-indigo-500 uppercase tracking-wider">
-                      Teachers
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-indigo-500 uppercase tracking-wider">
-                      Courses
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-indigo-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-indigo-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-indigo-100">
-                  {filteredDivisions.map((division) => (
-                    <tr key={division.id} className="hover:bg-indigo-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <Link
-                          to={`/admin/${standardId}/divisions/${division.id}`}
-                          className="text-indigo-900 font-medium hover:text-indigo-700"
-                        >
-                          {division.name}
-                        </Link>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-indigo-600">
-                        <div className="flex items-center">
-                          <Users className="h-4 w-4 mr-2 text-indigo-500" />
-                          {division.students}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-indigo-600">
-                        <div className="flex items-center">
-                          <UserPlus className="h-4 w-4 mr-2 text-indigo-500" />
-                          {division.teachers}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-indigo-600">
-                        <div className="flex items-center">
-                          <BookOpen className="h-4 w-4 mr-2 text-indigo-500" />
-                          {division.courses}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">
-                          {division.status.charAt(0).toUpperCase() + division.status.slice(1)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium relative">
-                        <button
-                          onClick={() => toggleActionMenu(division.id)}
-                          className="text-indigo-600 hover:text-indigo-900 focus:outline-none"
-                        >
-                          <MoreVertical className="h-5 w-5" />
-                        </button>
+          </div>
 
-                        {activeActionMenu === division.id && (
-                          <div className="absolute right-8 mt-0 w-48 bg-white rounded-lg shadow-lg py-1 z-50 border border-indigo-100">
-                            <button
-                              onClick={() => handleManageDivision(division.id)}
-                              className="block w-full text-left px-4 py-2 text-sm text-indigo-700 hover:bg-indigo-50"
-                            >
-                              <BookOpen className="inline-block w-4 h-4 mr-2" />
-                              Manage Division
-                            </button>
-                            <button
-                              onClick={() => handleEditDivision(division.id)}
-                              className="block w-full text-left px-4 py-2 text-sm text-indigo-700 hover:bg-indigo-50"
-                            >
-                              <Edit className="inline-block w-4 h-4 mr-2" />
-                              Edit Division
-                            </button>
-                            <button
-                              onClick={() => handleDeleteDivision(division.id)}
-                              className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                            >
-                              <Trash className="inline-block w-4 h-4 mr-2" />
-                              Delete Division
-                            </button>
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          {/* Summary Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <StatCard
+              icon={<Layers className="h-6 w-6 text-indigo-600" />}
+              title="Total Divisions"
+              value={divisions.length}
+              bgColor="bg-indigo-100"
+              textColor="text-indigo-700"
+            />
+
+            <StatCard
+              icon={<Users className="h-6 w-6 text-purple-600" />}
+              title="Total Students"
+              value={totalStudents}
+              bgColor="bg-purple-100"
+              textColor="text-purple-700"
+            />
+
+            <StatCard
+              icon={<UserPlus className="h-6 w-6 text-blue-600" />}
+              title="Assigned Teachers"
+              value={totalTeachers}
+              bgColor="bg-blue-100"
+              textColor="text-blue-700"
+            />
+          </div>
+
+          {/* Divisions Table Container with Scroll */}
+          <div className="bg-white rounded-xl shadow-sm border border-indigo-100 flex-1 flex flex-col min-h-0">
+            <div className="p-6 border-b border-indigo-100">
+              <div className="flex items-center">
+                <School className="h-6 w-6 text-indigo-600 mr-3" />
+                <h2 className="text-xl font-bold text-indigo-900">Divisions</h2>
+              </div>
             </div>
-          )}
-        </div>
-      </main>
+
+            <div className="flex-1 min-h-0 overflow-y-auto" style={{ maxHeight: "60vh" }}>
+              {filteredDivisions.length === 0 ? (
+                <div className="text-center py-12 px-6">
+                  <div className="text-indigo-400 mb-4">
+                    <Layers className="h-12 w-12 mx-auto" />
+                  </div>
+                  <h3 className="text-xl font-medium text-indigo-800 mb-2">No divisions found</h3>
+                  <p className="text-indigo-600 mb-6">
+                    {searchTerm ? "No divisions match your search criteria" : "Start by creating divisions for this standard"}
+                  </p>
+                  <button
+                    onClick={() => setIsModalOpen(true)}
+                    className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition duration-300 font-medium inline-flex items-center"
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create Division
+                  </button>
+                </div>
+              ) : (
+                <div className="p-6">
+                  <table className="min-w-full divide-y divide-indigo-100">
+                    <thead className="bg-indigo-50 sticky top-0">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-indigo-500 uppercase tracking-wider">
+                          Division Name
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-indigo-500 uppercase tracking-wider">
+                          Students
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-indigo-500 uppercase tracking-wider">
+                          Teachers
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-indigo-500 uppercase tracking-wider">
+                          Courses
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-indigo-500 uppercase tracking-wider">
+                          Status
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-indigo-500 uppercase tracking-wider">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-indigo-100">
+                      {filteredDivisions.map((division) => (
+                        <tr key={division.id} className="hover:bg-indigo-50 transition-colors">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <Link
+                              to={`/admin/${standardId}/divisions/${division.id}`}
+                              className="text-indigo-900 font-medium hover:text-indigo-700 transition-colors"
+                            >
+                              {division.name}
+                            </Link>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-indigo-600">
+                            <div className="flex items-center">
+                              <Users className="h-4 w-4 mr-2 text-indigo-500" />
+                              {division.students}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-indigo-600">
+                            <div className="flex items-center">
+                              <UserPlus className="h-4 w-4 mr-2 text-indigo-500" />
+                              {division.teachers}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-indigo-600">
+                            <div className="flex items-center">
+                              <BookOpen className="h-4 w-4 mr-2 text-indigo-500" />
+                              {division.courses}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full font-medium">
+                              {division.status.charAt(0).toUpperCase() + division.status.slice(1)}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div className="relative">
+                              <button
+                                onClick={() => toggleActionMenu(division.id)}
+                                className="text-indigo-600 hover:text-indigo-900 focus:outline-none p-1 rounded-md hover:bg-indigo-100 transition-colors"
+                                aria-label="More actions"
+                              >
+                                <MoreVertical className="h-5 w-5" />
+                              </button>
+
+                              {activeActionMenu === division.id && (
+                                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1 border border-indigo-100 z-20">
+                                  <button
+                                    onClick={() => handleManageDivision(division.id)}
+                                    className="block w-full text-left px-4 py-2 text-sm text-indigo-700 hover:bg-indigo-50 transition-colors"
+                                  >
+                                    <BookOpen className="inline-block w-4 h-4 mr-2" />
+                                    Manage Division
+                                  </button>
+                                  <button
+                                    onClick={() => handleEditDivision(division.id)}
+                                    className="block w-full text-left px-4 py-2 text-sm text-indigo-700 hover:bg-indigo-50 transition-colors"
+                                  >
+                                    <Edit className="inline-block w-4 h-4 mr-2" />
+                                    Edit Division
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteDivision(division.id)}
+                                    className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                                  >
+                                    <Trash className="inline-block w-4 h-4 mr-2" />
+                                    Delete Division
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        </main>
+      </div>
 
       {/* Modal for Creating/Editing Division */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-96">
-            <h2 className="text-xl font-bold text-indigo-900 mb-4">
-              {newDivision.id ? "Edit Division" : "Create Division"}
-            </h2>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Division Name</label>
-              <input
-                type="text"
-                value={newDivision.name}
-                onChange={(e) => setNewDivision({ ...newDivision, name: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Number of Students</label>
-              <input
-                type="number"
-                value={newDivision.students}
-                onChange={(e) => setNewDivision({ ...newDivision, students: parseInt(e.target.value, 10) || 0 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Number of Teachers</label>
-              <input
-                type="number"
-                value={newDivision.teachers}
-                onChange={(e) => setNewDivision({ ...newDivision, teachers: parseInt(e.target.value, 10) || 0 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Number of Courses</label>
-              <input
-                type="number"
-                value={newDivision.courses}
-                onChange={(e) => setNewDivision({ ...newDivision, courses: parseInt(e.target.value, 10) || 0 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-            <div className="flex justify-end">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-indigo-900">
+                {newDivision.id ? "Edit Division" : "Create Division"}
+              </h2>
               <button
-                onClick={() => setIsModalOpen(false)}
-                className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md mr-2 hover:bg-gray-400"
+                onClick={resetModal}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+                aria-label="Close modal"
               >
-                Cancel
-              </button>
-              <button
-                onClick={handleCreateDivision}
-                className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
-              >
-                {newDivision.id ? "Save Changes" : "Create"}
+                <X className="h-6 w-6" />
               </button>
             </div>
+
+            <form onSubmit={(e) => { e.preventDefault(); handleCreateOrUpdateDivision(); }}>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Division Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={newDivision.name}
+                    onChange={(e) => setNewDivision({ ...newDivision, name: e.target.value })}
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors ${
+                      errors.name ? 'border-red-300' : 'border-gray-300'
+                    }`}
+                    placeholder="Enter division name"
+                  />
+                  {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Number of Students
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={newDivision.students}
+                    onChange={(e) => setNewDivision({ ...newDivision, students: e.target.value })}
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors ${
+                      errors.students ? 'border-red-300' : 'border-gray-300'
+                    }`}
+                    placeholder="0"
+                  />
+                  {errors.students && <p className="text-red-500 text-xs mt-1">{errors.students}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Number of Teachers
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={newDivision.teachers}
+                    onChange={(e) => setNewDivision({ ...newDivision, teachers: e.target.value })}
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors ${
+                      errors.teachers ? 'border-red-300' : 'border-gray-300'
+                    }`}
+                    placeholder="0"
+                  />
+                  {errors.teachers && <p className="text-red-500 text-xs mt-1">{errors.teachers}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Number of Courses
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={newDivision.courses}
+                    onChange={(e) => setNewDivision({ ...newDivision, courses: e.target.value })}
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors ${
+                      errors.courses ? 'border-red-300' : 'border-gray-300'
+                    }`}
+                    placeholder="0"
+                  />
+                  {errors.courses && <p className="text-red-500 text-xs mt-1">{errors.courses}</p>}
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  type="button"
+                  onClick={resetModal}
+                  className="bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200 transition-colors font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors font-medium"
+                >
+                  {newDivision.id ? "Save Changes" : "Create Division"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
