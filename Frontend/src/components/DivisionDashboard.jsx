@@ -440,7 +440,7 @@ return (
     {/* Header */}
     <div className="mb-6">
       <div className="flex items-center mb-4">
-        <Link to={`/admin/standard/${standardId}`} className="mr-2">
+        <Link to={`/admin/${standardId}`} className="mr-2">
           <ChevronLeft className="h-5 w-5 text-indigo-600" />
         </Link>
         <h1 className="text-2xl font-bold text-indigo-900">

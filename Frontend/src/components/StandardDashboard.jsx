@@ -8,12 +8,12 @@ import {
   ChevronLeft,
   Plus,
   BookOpen,
-  MoreVertical,
   Edit,
   Trash,
   School,
   UserPlus,
   X,
+  Settings,
 } from "lucide-react";
 
 import DashboardHeader from "./shared/DashboardHeader";
@@ -94,7 +94,6 @@ const StandardDashboard = () => {
   const [standard, setStandard] = useState(null);
   const [divisions, setDivisions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeActionMenu, setActiveActionMenu] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newDivision, setNewDivision] = useState({ 
     id: null, 
@@ -143,10 +142,6 @@ const StandardDashboard = () => {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const toggleActionMenu = (divisionId) => {
-    setActiveActionMenu(activeActionMenu === divisionId ? null : divisionId);
   };
 
   const validateForm = () => {
@@ -223,7 +218,6 @@ const StandardDashboard = () => {
         courses: divisionToEdit.courses.toString(),
       });
       setIsModalOpen(true);
-      setActiveActionMenu(null);
     }
   };
 
@@ -234,7 +228,6 @@ const StandardDashboard = () => {
       if (mockDivisions[standardId]) {
         mockDivisions[standardId] = mockDivisions[standardId].filter(d => d.id !== divisionId);
       }
-      setActiveActionMenu(null);
     }
   };
 
@@ -245,7 +238,6 @@ const StandardDashboard = () => {
     } else {
       alert("Division not found.");
     }
-    setActiveActionMenu(null);
   };
 
   const filteredDivisions = divisions.filter((division) =>
@@ -264,198 +256,185 @@ const StandardDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-white flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-white">
       <DashboardHeader userRole="admin" />
 
-      <div className="flex-1 overflow-hidden flex flex-col min-h-0">
-        <main className="container mx-auto px-4 py-8 h-full flex-1 flex flex-col min-h-0">
-          {/* Header with navigation */}
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
-            <div>
-              <div className="flex items-center">
-                <Link to="/admin" className="mr-4 text-indigo-600 hover:text-indigo-800 transition-colors">
-                  <ChevronLeft className="h-6 w-6" />
-                </Link>
-                <h1 className="text-3xl font-bold text-indigo-900">{standard.name}</h1>
-              </div>
-              <p className="text-indigo-600 mt-2 ml-10">Manage divisions, students and teachers</p>
+      <main className="container mx-auto px-4 py-8">
+        {/* Header with navigation */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+          <div>
+            <div className="flex items-center">
+              <Link to="/admin" className="mr-4 text-indigo-600 hover:text-indigo-800 transition-colors">
+                <ChevronLeft className="h-6 w-6" />
+              </Link>
+              <h1 className="text-3xl font-bold text-indigo-900">{standard.name}</h1>
             </div>
-            <div className="flex items-center mt-4 md:mt-0 gap-4">
-              <SearchBar
-                placeholder="Search divisions..."
-                value={searchTerm}
-                onChange={setSearchTerm}
-              />
-              <button
-                onClick={() => setIsModalOpen(true)}
-                className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition duration-300 font-medium flex items-center whitespace-nowrap"
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Create Division
-              </button>
+            <p className="text-indigo-600 mt-2 ml-10">Manage divisions, students and teachers</p>
+          </div>
+          <div className="flex items-center mt-4 md:mt-0 gap-4">
+            <SearchBar
+              placeholder="Search divisions..."
+              value={searchTerm}
+              onChange={setSearchTerm}
+            />
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition duration-300 font-medium flex items-center whitespace-nowrap"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Create Division
+            </button>
+          </div>
+        </div>
+
+        {/* Summary Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <StatCard
+            icon={<Layers className="h-6 w-6 text-indigo-600" />}
+            title="Total Divisions"
+            value={divisions.length}
+            bgColor="bg-indigo-100"
+            textColor="text-indigo-700"
+          />
+
+          <StatCard
+            icon={<Users className="h-6 w-6 text-purple-600" />}
+            title="Total Students"
+            value={totalStudents}
+            bgColor="bg-purple-100"
+            textColor="text-purple-700"
+          />
+
+          <StatCard
+            icon={<UserPlus className="h-6 w-6 text-blue-600" />}
+            title="Assigned Teachers"
+            value={totalTeachers}
+            bgColor="bg-blue-100"
+            textColor="text-blue-700"
+          />
+        </div>
+
+        {/* Divisions Table Container */}
+        <div className="bg-white rounded-xl shadow-sm border border-indigo-100 mb-8">
+          <div className="p-6 border-b border-indigo-100">
+            <div className="flex items-center">
+              <School className="h-6 w-6 text-indigo-600 mr-3" />
+              <h2 className="text-xl font-bold text-indigo-900">Divisions</h2>
             </div>
           </div>
 
-          {/* Summary Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <StatCard
-              icon={<Layers className="h-6 w-6 text-indigo-600" />}
-              title="Total Divisions"
-              value={divisions.length}
-              bgColor="bg-indigo-100"
-              textColor="text-indigo-700"
-            />
-
-            <StatCard
-              icon={<Users className="h-6 w-6 text-purple-600" />}
-              title="Total Students"
-              value={totalStudents}
-              bgColor="bg-purple-100"
-              textColor="text-purple-700"
-            />
-
-            <StatCard
-              icon={<UserPlus className="h-6 w-6 text-blue-600" />}
-              title="Assigned Teachers"
-              value={totalTeachers}
-              bgColor="bg-blue-100"
-              textColor="text-blue-700"
-            />
-          </div>
-
-          {/* Divisions Table Container with Scroll */}
-          <div className="bg-white rounded-xl shadow-sm border border-indigo-100 flex-1 flex flex-col min-h-0">
-            <div className="p-6 border-b border-indigo-100">
-              <div className="flex items-center">
-                <School className="h-6 w-6 text-indigo-600 mr-3" />
-                <h2 className="text-xl font-bold text-indigo-900">Divisions</h2>
-              </div>
-            </div>
-
-            <div className="flex-1 min-h-0 overflow-y-auto" style={{ maxHeight: "60vh" }}>
-              {filteredDivisions.length === 0 ? (
-                <div className="text-center py-12 px-6">
-                  <div className="text-indigo-400 mb-4">
-                    <Layers className="h-12 w-12 mx-auto" />
-                  </div>
-                  <h3 className="text-xl font-medium text-indigo-800 mb-2">No divisions found</h3>
-                  <p className="text-indigo-600 mb-6">
-                    {searchTerm ? "No divisions match your search criteria" : "Start by creating divisions for this standard"}
-                  </p>
-                  <button
-                    onClick={() => setIsModalOpen(true)}
-                    className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition duration-300 font-medium inline-flex items-center"
-                  >
-                    <Plus className="mr-2 h-4 w-4" />
-                    Create Division
-                  </button>
+          <div className="overflow-x-auto">
+            {filteredDivisions.length === 0 ? (
+              <div className="text-center py-12 px-6">
+                <div className="text-indigo-400 mb-4">
+                  <Layers className="h-12 w-12 mx-auto" />
                 </div>
-              ) : (
-                <div className="p-6">
-                  <table className="min-w-full divide-y divide-indigo-100">
-                    <thead className="bg-indigo-50 sticky top-0">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-indigo-500 uppercase tracking-wider">
-                          Division Name
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-indigo-500 uppercase tracking-wider">
-                          Students
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-indigo-500 uppercase tracking-wider">
-                          Teachers
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-indigo-500 uppercase tracking-wider">
-                          Courses
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-indigo-500 uppercase tracking-wider">
-                          Status
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-indigo-500 uppercase tracking-wider">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-indigo-100">
-                      {filteredDivisions.map((division) => (
-                        <tr key={division.id} className="hover:bg-indigo-50 transition-colors">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <Link
-                              to={`/admin/${standardId}/divisions/${division.id}`}
-                              className="text-indigo-900 font-medium hover:text-indigo-700 transition-colors"
-                            >
-                              {division.name}
-                            </Link>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-indigo-600">
-                            <div className="flex items-center">
-                              <Users className="h-4 w-4 mr-2 text-indigo-500" />
-                              {division.students}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-indigo-600">
-                            <div className="flex items-center">
-                              <UserPlus className="h-4 w-4 mr-2 text-indigo-500" />
-                              {division.teachers}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-indigo-600">
-                            <div className="flex items-center">
-                              <BookOpen className="h-4 w-4 mr-2 text-indigo-500" />
-                              {division.courses}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full font-medium">
-                              {division.status.charAt(0).toUpperCase() + division.status.slice(1)}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <div className="relative">
-                              <button
-                                onClick={() => toggleActionMenu(division.id)}
-                                className="text-indigo-600 hover:text-indigo-900 focus:outline-none p-1 rounded-md hover:bg-indigo-100 transition-colors"
-                                aria-label="More actions"
-                              >
-                                <MoreVertical className="h-5 w-5" />
-                              </button>
-
-                              {activeActionMenu === division.id && (
-                                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1 border border-indigo-100 z-20">
-                                  <button
-                                    onClick={() => handleManageDivision(division.id)}
-                                    className="block w-full text-left px-4 py-2 text-sm text-indigo-700 hover:bg-indigo-50 transition-colors"
-                                  >
-                                    <BookOpen className="inline-block w-4 h-4 mr-2" />
-                                    Manage Division
-                                  </button>
-                                  <button
-                                    onClick={() => handleEditDivision(division.id)}
-                                    className="block w-full text-left px-4 py-2 text-sm text-indigo-700 hover:bg-indigo-50 transition-colors"
-                                  >
-                                    <Edit className="inline-block w-4 h-4 mr-2" />
-                                    Edit Division
-                                  </button>
-                                  <button
-                                    onClick={() => handleDeleteDivision(division.id)}
-                                    className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                                  >
-                                    <Trash className="inline-block w-4 h-4 mr-2" />
-                                    Delete Division
-                                  </button>
-                                </div>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
+                <h3 className="text-xl font-medium text-indigo-800 mb-2">No divisions found</h3>
+                <p className="text-indigo-600 mb-6">
+                  {searchTerm ? "No divisions match your search criteria" : "Start by creating divisions for this standard"}
+                </p>
+                <button
+                  onClick={() => setIsModalOpen(true)}
+                  className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition duration-300 font-medium inline-flex items-center"
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Create Division
+                </button>
+              </div>
+            ) : (
+              <table className="min-w-full divide-y divide-indigo-100">
+                <thead className="bg-indigo-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-indigo-500 uppercase tracking-wider">
+                      Division Name
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-indigo-500 uppercase tracking-wider">
+                      Students
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-indigo-500 uppercase tracking-wider">
+                      Teachers
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-indigo-500 uppercase tracking-wider">
+                      Courses
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-indigo-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-indigo-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-indigo-100">
+                  {filteredDivisions.map((division) => (
+                    <tr key={division.id} className="hover:bg-indigo-50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <Link
+                          to={`/admin/${standardId}/divisions/${division.id}`}
+                          className="text-indigo-900 font-medium hover:text-indigo-700 transition-colors"
+                        >
+                          {division.name}
+                        </Link>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-indigo-600">
+                        <div className="flex items-center">
+                          <Users className="h-4 w-4 mr-2 text-indigo-500" />
+                          {division.students}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-indigo-600">
+                        <div className="flex items-center">
+                          <UserPlus className="h-4 w-4 mr-2 text-indigo-500" />
+                          {division.teachers}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-indigo-600">
+                        <div className="flex items-center">
+                          <BookOpen className="h-4 w-4 mr-2 text-indigo-500" />
+                          {division.courses}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full font-medium">
+                          {division.status.charAt(0).toUpperCase() + division.status.slice(1)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleManageDivision(division.id)}
+                            className="inline-flex items-center px-3 py-1.5 bg-indigo-100 text-indigo-700 text-xs font-medium rounded-md hover:bg-indigo-200 transition-colors"
+                            title="Manage Division"
+                          >
+                            <Settings className="h-3 w-3 mr-1" />
+                            Manage
+                          </button>
+                          <button
+                            onClick={() => handleEditDivision(division.id)}
+                            className="inline-flex items-center px-3 py-1.5 bg-blue-100 text-blue-700 text-xs font-medium rounded-md hover:bg-blue-200 transition-colors"
+                            title="Edit Division"
+                          >
+                            <Edit className="h-3 w-3 mr-1" />
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteDivision(division.id)}
+                            className="inline-flex items-center px-3 py-1.5 bg-red-100 text-red-700 text-xs font-medium rounded-md hover:bg-red-200 transition-colors"
+                            title="Delete Division"
+                          >
+                            <Trash className="h-3 w-3 mr-1" />
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
-        </main>
-      </div>
+        </div>
+      </main>
 
       {/* Modal for Creating/Editing Division */}
       {isModalOpen && (

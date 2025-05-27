@@ -261,10 +261,6 @@ const handleSubjectChange = (e) => {
 </button>
       </div>
     </div>
-  
-
-
-
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Performance & Announcements */}
           <div className="lg:col-span-2 space-y-6">
@@ -342,110 +338,38 @@ const handleSubjectChange = (e) => {
             </div>
           </div>
           
-          {/* Right Column - Materials */}
-          <div className="space-y-6">
-            {/* Lecture Materials */}
-            <div className="bg-white rounded-xl shadow-sm border border-indigo-100 p-6">
-              <h2 className="text-xl font-bold text-indigo-900 mb-4 flex items-center">
-                <BookOpen className="h-5 w-5 mr-2 text-indigo-600" />
-                Lecture Materials
-              </h2>
-              
-              {classData.materials.length > 0 ? (
-                <div className="space-y-3">
-                  {classData.materials.map((material) => (
-                    <div 
-                      key={material.id} 
-                      className="border border-indigo-100 rounded-lg p-4 hover:border-indigo-300 hover:bg-indigo-50 transition-all duration-300"
-                    >
-                      <div className="flex items-start">
-                        <div className="flex-shrink-0 mr-3">
-                          {getMaterialIcon(material.type)}
-                        </div>
-                        <div className="flex-grow min-w-0">
-                          <h3 className="font-medium text-indigo-900 truncate">{material.title}</h3>
-                          <div className="flex items-center gap-3 text-xs text-indigo-600 mt-1">
-                            <span>{formatDate(material.uploadDate)}</span>
-                            {material.type === 'video' && <span>{material.duration}</span>}
-                            {(material.type === 'pdf' || material.type === 'docx') && <span>{material.size}</span>}
-                          </div>
-                        </div>
-                        <div className="ml-2 flex-shrink-0">
-                          {material.type === 'link' ? (
-                            <button className="p-2 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-100 rounded-full transition-colors">
-                              <ExternalLink className="h-4 w-4" />
-                            </button>
-                          ) : (
-                            <button className="p-2 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-100 rounded-full transition-colors">
-                              <Download className="h-4 w-4" />
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-6 text-indigo-500">
-                  No materials available yet
-                </div>
-              )}
-            </div>
-            
-            {/* Quick Links */}
-            <div className="bg-white rounded-xl shadow-sm border border-indigo-100 p-6">
-              <h2 className="text-xl font-bold text-indigo-900 mb-4 flex items-center">
-                <ExternalLink className="h-5 w-5 mr-2 text-indigo-600" />
-                Quick Links
-              </h2>
-              
-              <div className="space-y-2">
-                <a 
-                  href="#" 
-                  className="flex items-center justify-between p-3 text-indigo-700 hover:bg-indigo-50 rounded-lg transition-colors"
-                >
-                  <div className="flex items-center">
-                    <Award className="h-4 w-4 mr-3 text-indigo-600" />
-                    <span>My Grades</span>
-                  </div>
-                  <ChevronRight className="h-4 w-4" />
-                </a>
-                
-                <a 
-                  href="#" 
-                  className="flex items-center justify-between p-3 text-indigo-700 hover:bg-indigo-50 rounded-lg transition-colors"
-                >
-                  <div className="flex items-center">
-                    <Calendar className="h-4 w-4 mr-3 text-indigo-600" />
-                    <span>Class Schedule</span>
-                  </div>
-                  <ChevronRight className="h-4 w-4" />
-                </a>
-                
-                <a 
-                  href="#" 
-                  className="flex items-center justify-between p-3 text-indigo-700 hover:bg-indigo-50 rounded-lg transition-colors"
-                >
-                  <div className="flex items-center">
-                    <CheckCircle className="h-4 w-4 mr-3 text-indigo-600" />
-                    <span>Assignment Deadlines</span>
-                  </div>
-                  <ChevronRight className="h-4 w-4" />
-                </a>
-                
-                <a 
-                  href="#" 
-                  className="flex items-center justify-between p-3 text-indigo-700 hover:bg-indigo-50 rounded-lg transition-colors"
-                >
-                  <div className="flex items-center">
-                    <User className="h-4 w-4 mr-3 text-indigo-600" />
-                    <span>Contact Teacher</span>
-                  </div>
-                  <ChevronRight className="h-4 w-4" />
-                </a>
-              </div>
-            </div>
-          </div>
+         {/* Right Column - Quick Links Only */}
+<div className="space-y-6">
+  {/* Quick Links */}
+  <div className="bg-white rounded-xl shadow-sm border border-indigo-100 p-6">
+    <h2 className="text-xl font-bold text-indigo-900 mb-4 flex items-center">
+      <ExternalLink className="h-5 w-5 mr-2 text-indigo-600" />
+      Quick Links
+    </h2>
+    <div className="space-y-2">
+      <a 
+        href="#" 
+        className="flex items-center justify-between p-3 text-indigo-700 hover:bg-indigo-50 rounded-lg transition-colors"
+      >
+        <div className="flex items-center">
+          <User className="h-4 w-4 mr-3 text-indigo-600" />
+          <span>Contact Teacher</span>
+        </div>
+        <ChevronRight className="h-4 w-4" />
+      </a>
+      <a 
+        href="#" 
+        className="flex items-center justify-between p-3 text-indigo-700 hover:bg-indigo-50 rounded-lg transition-colors"
+      >
+        <div className="flex items-center">
+          <AlertCircle className="h-4 w-4 mr-3 text-indigo-600" />
+          <span>Help &amp; Support</span>
+        </div>
+        <ChevronRight className="h-4 w-4" />
+      </a>
+    </div>
+  </div>
+</div>
         </div>
       </main>
     </div>

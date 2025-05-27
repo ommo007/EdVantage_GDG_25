@@ -14,7 +14,9 @@ import {
   BookOpen, 
   ArrowLeft,
   PanelRight,
-  Database
+  Database,
+  FileText,
+  ListChecks
 } from "lucide-react"
 import { Link as LinkIcon } from "lucide-react";
 import ReactMarkdown from "react-markdown"
@@ -38,7 +40,16 @@ const StudentStudySpace = () => {
   const [videoUrl, setVideoUrl] = useState("")
   const [isWhiteboardOpen, setIsWhiteboardOpen] = useState(false)
   const [useRagAssistant, setUseRagAssistant] = useState(false)
-  
+  const [quizzes, setQuizzes] = useState([]) // For quizzes
+  const [materials, setMaterials] = useState([]) // For lecture materials
+  const [chapters, setChapters] = useState([
+  { id: 1, name: "Introduction" },
+  { id: 2, name: "Algebra Basics" },
+  { id: 3, name: "Geometry" },
+  { id: 4, name: "Trigonometry" },
+  { id: 5, name: "Calculus" }
+]);
+
   // -------------------- Hooks --------------------
   const navigate = useNavigate()
   const { classId } = useParams()
@@ -62,6 +73,25 @@ const StudentStudySpace = () => {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
   }, [messages]);
+
+  // Fetch quizzes and materials when tool changes
+  useEffect(() => {
+    // Replace with your actual API endpoints
+    if (selectedTool === "quiz") {
+      // Example: fetch quizzes for the class
+      fetch(`/api/student/quizzes?classId=${classId}`)
+        .then(res => res.json())
+        .then(data => setQuizzes(data || []))
+        .catch(() => setQuizzes([]));
+    }
+    if (selectedTool === "materials") {
+      // Example: fetch materials for the class
+      fetch(`/api/student/materials?classId=${classId}`)
+        .then(res => res.json())
+        .then(data => setMaterials(data || []))
+        .catch(() => setMaterials([]));
+    }
+  }, [selectedTool, classId]);
 
   // Send message to AI assistant
   const handleSendMessage = async () => {
@@ -200,6 +230,7 @@ const StudentStudySpace = () => {
           <button
             onClick={() => setIsToolbarOpen(!isToolbarOpen)}
             className="p-1.5 hover:bg-indigo-100 rounded-md transition duration-300"
+           
           >
             <Menu className="h-5 w-5 text-indigo-600" />
           </button>
@@ -212,6 +243,7 @@ const StudentStudySpace = () => {
                 ? "bg-indigo-200"
                 : "hover:bg-indigo-100"
             }`}
+            title="Lecture Space"
           >
             <BookOpen className="h-5 w-5 text-indigo-600" />
           </button>
@@ -224,8 +256,35 @@ const StudentStudySpace = () => {
                 ? "bg-indigo-200"
                 : "hover:bg-indigo-100"
             }`}
+            title="Study Notes"
           >
             <Edit className="h-5 w-5 text-indigo-600" />
+          </button>
+
+          {/* Quiz Tool */}
+          <button
+            onClick={() => setSelectedTool("quiz")}
+            className={`p-2 rounded-md ${
+              selectedTool === "quiz"
+                ? "bg-indigo-200"
+                : "hover:bg-indigo-100"
+            }`}
+            title="Quiz"
+          >
+            <ListChecks className="h-5 w-5 text-indigo-600" />
+          </button>
+
+          {/* Lecture Materials Tool */}
+          <button
+            onClick={() => setSelectedTool("materials")}
+            className={`p-2 rounded-md ${
+              selectedTool === "materials"
+                ? "bg-indigo-200"
+                : "hover:bg-indigo-100"
+            }`}
+            title="Lecture Materials"
+          >
+            <FileText className="h-5 w-5 text-indigo-600" />
           </button>
 
           {/* AI Assistant Tool */}
@@ -248,32 +307,32 @@ const StudentStudySpace = () => {
       <div className="flex flex-1 overflow-hidden relative">
         {/* ----------- Sidebar: Study Plan ----------- */}
         {isToolbarOpen && (
-          <aside className="w-64 bg-white border-r border-indigo-100 flex flex-col overflow-hidden">
-            <div className="p-3 border-b border-indigo-100 flex-shrink-0">
-              <h3 className="font-medium text-indigo-800">Study Plan</h3>
-            </div>
-            <div className="p-2 flex-1 overflow-y-auto">
-              <div className="space-y-1">
-                {[1, 2, 3, 4, 5].map((day) => (
-                  <button
-                    key={day}
-                    onClick={() => setSelectedDay(day)}
-                    className={`w-full flex items-center px-3 py-2 rounded-md transition duration-300 ${
-                      selectedDay === day 
-                        ? 'bg-indigo-100 text-indigo-800' 
-                        : 'text-indigo-600 hover:bg-indigo-50'
-                    }`}
-                  >
-                    <Calendar className="w-4 h-4 min-w-[16px]" />
-                    <span className="ml-2">Day {day}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </aside>
-        )}
+  <aside className="w-64 bg-white border-r border-indigo-100 flex flex-col overflow-hidden">
+    <div className="p-3 border-b border-indigo-100 flex-shrink-0">
+      <h3 className="font-medium text-indigo-800">Chapters</h3>
+    </div>
+    <div className="p-2 flex-1 overflow-y-auto">
+      <div className="space-y-1">
+        {chapters.map((chapter) => (
+          <button
+            key={chapter.id}
+            onClick={() => setSelectedDay(chapter.id)}
+            className={`w-full flex items-center px-3 py-2 rounded-md transition duration-300 ${
+              selectedDay === chapter.id
+                ? 'bg-indigo-100 text-indigo-800'
+                : 'text-indigo-600 hover:bg-indigo-50'
+            }`}
+          >
+            <Calendar className="w-4 h-4 min-w-[16px]" />
+            <span className="ml-2">{chapter.name}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  </aside>
+)}
 
-        {/* ----------- Main Content: Lecture Space & Whiteboard ----------- */}
+        {/* ----------- Main Content: Workspace ----------- */}
         <div
           className={`flex-1 flex flex-col overflow-hidden relative
             ${isToolbarOpen ? "border-l border-indigo-100" : ""}
@@ -291,45 +350,94 @@ const StudentStudySpace = () => {
             </button>
           )}
           {/* Section Title */}
-<div className="px-4 py-2.5 bg-white flex-shrink-0 border-b border-indigo-100">
-              <h1 className="text-xl font-bold text-indigo-900">
+          <div className="px-4 py-2.5 bg-white flex-shrink-0 border-b border-indigo-100">
+            <h1 className="text-xl font-bold text-indigo-900">
               {selectedTool === 'video' && 'Lecture Space'}
               {selectedTool === 'whiteboard' && 'Study Notes'}
+              {selectedTool === 'quiz' && 'Quiz'}
+              {selectedTool === 'materials' && 'Lecture Materials'}
+              {useRagAssistant && selectedTool !== 'quiz' && selectedTool !== 'materials' && selectedTool !== 'video' && selectedTool !== 'whiteboard' && 'AI Study Assistant'}
             </h1>
           </div>
           {/* Main Workspace */}
           <div className="flex-1 p-4 overflow-auto">
-           {selectedTool === 'video' && (
-  <div className="w-full flex justify-center items-center">
-    {videoUrl ? (
-      <div
-        className={
-          `w-full aspect-[16/9] ` +
-          (!isToolbarOpen && !isAssistantOpen
-            ? "max-w-4xl"
-            : "max-w-4xl")
-        }
-      >
-        <iframe
-         key={videoUrl} 
-          className="w-full h-full rounded-lg"
-          src={
-            videoUrl.replace("watch?v=", "embed/") +
-            "?rel=0&modestbranding=1&showinfo=0"
-          }
-          title="YouTube video player"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-        ></iframe>
-      </div>
-    ) : (
-      <p className="text-indigo-600">Select a lecture to begin</p>
-    )}
-  </div>
-
-
-)}
+            {selectedTool === 'video' && (
+              <div className="w-full flex justify-center items-center">
+                {videoUrl ? (
+                  <div
+                    className={
+                      `w-full aspect-[16/9] ` +
+                      (!isToolbarOpen && !isAssistantOpen
+                        ? "max-w-4xl"
+                        : "max-w-4xl")
+                    }
+                  >
+                    <iframe
+                      key={videoUrl} 
+                      className="w-full h-full rounded-lg"
+                      src={
+                        videoUrl.replace("watch?v=", "embed/") +
+                        "?rel=0&modestbranding=1&showinfo=0"
+                      }
+                      title="YouTube video player"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    ></iframe>
+                  </div>
+                ) : (
+                  <p className="text-indigo-600">Select a lecture to begin</p>
+                )}
+              </div>
+            )}
             {selectedTool === 'whiteboard' && <Whiteboard />}
+            {selectedTool === 'quiz' && (
+              <div>
+                
+                {quizzes.length === 0 ? (
+                  <p className="text-indigo-600 text-center ">No quizzes available yet.</p>
+                ) : (
+                  <ul className="space-y-3">
+                    {quizzes.map((quiz) => (
+                      <li key={quiz.id} className="bg-indigo-50 p-4 rounded-lg flex justify-between items-center">
+                        <span className="font-medium text-indigo-800">{quiz.title}</span>
+                        <a
+                          href={quiz.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition"
+                        >
+                          Attempt Quiz
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+            {selectedTool === 'materials' && (
+              <div>
+               
+                {materials.length === 0 ? (
+                  <p className="text-indigo-600 text-center">No lecture materials uploaded yet.</p>
+                ) : (
+                  <ul className="space-y-3">
+                    {materials.map((material) => (
+                      <li key={material.id} className="bg-indigo-50 p-4 rounded-lg flex justify-between items-center">
+                        <span className="font-medium text-indigo-800">{material.name}</span>
+                        <a
+                          href={material.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition"
+                        >
+                          View / Download
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -362,42 +470,42 @@ const StudentStudySpace = () => {
                         className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}
                       >
                         <div
-  className={`max-w-[80%] rounded-xl px-3 py-2 text-sm ${
-    message.sender === "user"
-      ? "bg-indigo-600 text-white border-r-4 border-indigo-400 pr-4 shadow"
-      : "bg-indigo-50 text-indigo-800 border-l-4 border-blue-400 pl-4"
-  }`}
-  onClick={() => handleVideoLinkClick(message)}
-  style={{ cursor: message.sender === "bot" ? "pointer" : "default" }}
->
-  {message.sender === "bot" ? (
-    <ReactMarkdown
-    remarkPlugins={[remarkGfm]}
-      components={{
-        a: ({node, ...props}) => (
-          <a
-            {...props}
-            className="inline-flex items-center gap-1 text-blue-600 underline hover:text-blue-800 cursor-pointer"
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={e => {
-              e.preventDefault();
-              handleVideoLinkClick(message);
-            }}
-          >
-            <LinkIcon className="w-4 h-4 inline" />
-            {props.children}
-          </a>
-        ),
-        p: ({node, ...props}) => <p {...props} className="mb-1" />
-      }}
-    >
-      {message.text}
-    </ReactMarkdown>
-  ) : (
-    message.text
-  )}
-</div>
+                          className={`max-w-[80%] rounded-xl px-3 py-2 text-sm ${
+                            message.sender === "user"
+                              ? "bg-indigo-600 text-white border-r-4 border-indigo-400 pr-4 shadow"
+                              : "bg-indigo-50 text-indigo-800 border-l-4 border-blue-400 pl-4"
+                          }`}
+                          onClick={() => handleVideoLinkClick(message)}
+                          style={{ cursor: message.sender === "bot" ? "pointer" : "default" }}
+                        >
+                          {message.sender === "bot" ? (
+                            <ReactMarkdown
+                              remarkPlugins={[remarkGfm]}
+                              components={{
+                                a: ({node, ...props}) => (
+                                  <a
+                                    {...props}
+                                    className="inline-flex items-center gap-1 text-blue-600 underline hover:text-blue-800 cursor-pointer"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={e => {
+                                      e.preventDefault();
+                                      handleVideoLinkClick(message);
+                                    }}
+                                  >
+                                    <LinkIcon className="w-4 h-4 inline" />
+                                    {props.children}
+                                  </a>
+                                ),
+                                p: ({node, ...props}) => <p {...props} className="mb-1" />
+                              }}
+                            >
+                              {message.text}
+                            </ReactMarkdown>
+                          ) : (
+                            message.text
+                          )}
+                        </div>
                       </div>
                     ))}
                     {isLoading && (

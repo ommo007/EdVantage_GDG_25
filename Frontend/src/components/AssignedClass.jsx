@@ -10,7 +10,8 @@ import {
   Award,
   Bell,
   LogOut,
-  
+  Plus,
+  X,
 } from 'lucide-react';
 
 import DashboardHeader from './shared/DashboardHeader';
@@ -74,7 +75,13 @@ const AssignedClass = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
-  const [selectedSubject, setSelectedSubject] = useState(""); // Add this state
+  const [selectedSubject, setSelectedSubject] = useState("");
+  // Announcement modal and state
+  const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
+  const [announcementTitle, setAnnouncementTitle] = useState('');
+  const [announcementDesc, setAnnouncementDesc] = useState('');
+  const [announcements, setAnnouncements] = useState([]);
+
   useEffect(() => {
     fetchClassroomData();
   }, [classId]);
@@ -84,7 +91,6 @@ const AssignedClass = () => {
       setIsLoading(true);
       // Simulate API call delay
       await new Promise((resolve) => setTimeout(resolve, 1000));
-
       // Fetch data based on classId
       const data = mockClassroomData[classId] || Object.values(mockClassroomData)[0];
       setClassData(data);
@@ -94,6 +100,31 @@ const AssignedClass = () => {
       setIsLoading(false);
     }
   };
+
+  // Add announcement handler
+  const handleAddAnnouncement = () => {
+    if (!announcementTitle.trim() || !announcementDesc.trim()) {
+      alert("Please fill in both title and description.");
+      return;
+    }
+    const newAnnouncement = {
+      id: Date.now(),
+      title: announcementTitle,
+      date: new Date().toISOString().split('T')[0],
+      content: announcementDesc,
+    };
+    setAnnouncements((prev) => [newAnnouncement, ...prev]);
+    setAnnouncementTitle('');
+    setAnnouncementDesc('');
+    setShowAnnouncementModal(false);
+    // In future: send to backend API here
+  };
+
+  // Merge mock and new announcements for display
+  const allAnnouncements = [
+    ...(announcements || []),
+    ...((classData?.recentAnnouncements) || [])
+  ];
 
   if (isLoading) {
     return (
@@ -143,63 +174,106 @@ const AssignedClass = () => {
               <p className="text-indigo-600 mt-2">
                 {classData.subjects.join(', ')} • {classData.studentCount} Students
               </p>
- {/* Enhanced Subject Dropdown */}
-<div className="mt-2 relative group">
-  <select
-    value={selectedSubject}
-    onChange={(e) => setSelectedSubject(e.target.value)}
-    className="w-full appearance-none px-4 py-3 bg-gradient-to-r from-white to-indigo-50 border-2 border-indigo-200 rounded-lg text-indigo-700 font-medium shadow-sm hover:shadow-md hover:border-indigo-300 focus:outline-none focus:ring-3 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all duration-300 ease-in-out cursor-pointer"
-  >
-    <option value="" disabled className="text-gray-500 font-normal">
-      📚 Select Subject
-    </option>
-    {classData.subjects.map((subject, index) => (
-      <option key={index} value={subject} className="text-indigo-700 font-medium py-2">
-        {subject}
-      </option>
-    ))}
-  </select>
-  
-  {/* Custom dropdown arrow with animation */}
-  <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
-    <svg 
-      className="w-5 h-5 text-indigo-500 group-hover:text-indigo-600 transition-all duration-300 group-focus-within:rotate-180" 
-      fill="none" 
-      stroke="currentColor" 
-      viewBox="0 0 24 24"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-    </svg>
-  </div>
-</div>
+              {/* Enhanced Subject Dropdown */}
+              <div className="mt-2 relative group">
+                <select
+                  value={selectedSubject}
+                  onChange={(e) => setSelectedSubject(e.target.value)}
+                  className="w-full appearance-none px-4 py-3 bg-gradient-to-r from-white to-indigo-50 border-2 border-indigo-200 rounded-lg text-indigo-700 font-medium shadow-sm hover:shadow-md hover:border-indigo-300 focus:outline-none focus:ring-3 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all duration-300 ease-in-out cursor-pointer"
+                >
+                  <option value="" disabled className="text-gray-500 font-normal">
+                    📚 Select Subject
+                  </option>
+                  {classData.subjects.map((subject, index) => (
+                    <option key={index} value={subject} className="text-indigo-700 font-medium py-2">
+                      {subject}
+                    </option>
+                  ))}
+                </select>
+                {/* Custom dropdown arrow with animation */}
+                <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+                  <svg
+                    className="w-5 h-5 text-indigo-500 group-hover:text-indigo-600 transition-all duration-300 group-focus-within:rotate-180"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
             </div>
             <div className="flex items-center space-x-4">
+              {/* Add Announcement Button */}
               <button
-                className="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 px-4 py-2 rounded-md transition duration-300 flex items-center"
-                onClick={() => alert('Announcements feature coming soon!')}
+                className="bg-indigo-600 text-white px-4 py-2 rounded-md transition duration-300 flex items-center hover:bg-indigo-700"
+                onClick={() => setShowAnnouncementModal(true)}
               >
-                <Bell className="h-4 w-4 mr-2" />
-                Announcements
+                <Plus className="h-4 w-4 mr-2" />
+                Add Announcement
               </button>
               <button
-  className={`bg-indigo-600 text-white px-4 py-2 rounded-md transition duration-300 flex items-center ${
-    !selectedSubject ? 'opacity-50 cursor-not-allowed' : 'hover:bg-indigo-700'
-  }`}
-  onClick={() => {
-    if (selectedSubject) {
-      // Navigate to the selected subject's study space
-      navigate(`/instructor/class/${classData.id}/study-space/${selectedSubject}`);
-    } else {
-      alert('Please select a subject to proceed to the study space.');
-    }
-  }}
-  disabled={!selectedSubject} // Disable the button if no subject is selected
->
-  <LogOut className="h-4 w-4 mr-2" />
-  Enter Classroom
-</button>
+                className={`bg-indigo-600 text-white px-4 py-2 rounded-md transition duration-300 flex items-center ${
+                  !selectedSubject ? 'opacity-50 cursor-not-allowed' : 'hover:bg-indigo-700'
+                }`}
+                onClick={() => {
+                  if (selectedSubject) {
+                    navigate(`/instructor/class/${classData.id}/study-space/${selectedSubject}`);
+                  } else {
+                    alert('Please select a subject to proceed to the study space.');
+                  }
+                }}
+                disabled={!selectedSubject}
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Enter Classroom
+              </button>
             </div>
           </div>
+
+          {/* Announcement Modal */}
+          {showAnnouncementModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
+              <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative">
+                <button
+                  className="absolute top-2 right-2 text-gray-400 hover:text-indigo-600"
+                  onClick={() => setShowAnnouncementModal(false)}
+                >
+                  <X className="h-5 w-5" />
+                </button>
+                <h2 className="text-xl font-bold text-indigo-900 mb-4 flex items-center">
+                  <Bell className="h-5 w-5 mr-2" />
+                  Create Announcement
+                </h2>
+                <div className="mb-4">
+                  <label className="block text-indigo-700 font-medium mb-1">Title</label>
+                  <input
+                    type="text"
+                    value={announcementTitle}
+                    onChange={e => setAnnouncementTitle(e.target.value)}
+                    className="w-full border border-indigo-200 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    placeholder="Enter announcement title"
+                  />
+                </div>
+                <div className="mb-4">
+                  <label className="block text-indigo-700 font-medium mb-1">Description</label>
+                  <textarea
+                    value={announcementDesc}
+                    onChange={e => setAnnouncementDesc(e.target.value)}
+                    className="w-full border border-indigo-200 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    placeholder="Enter announcement details"
+                    rows={4}
+                  />
+                </div>
+                <button
+                  className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition w-full"
+                  onClick={handleAddAnnouncement}
+                >
+                  Post Announcement
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Tabs Navigation */}
           <div className="bg-white rounded-t-xl shadow-sm border border-indigo-100 mb-6 overflow-x-auto">
@@ -217,14 +291,14 @@ const AssignedClass = () => {
               </button>
               <button
                 className={`px-6 py-4 font-medium text-center flex items-center ${
-                  activeTab === 'resources'
+                  activeTab === 'announcements'
                     ? 'text-indigo-600 border-b-2 border-indigo-600'
                     : 'text-indigo-400 hover:text-indigo-600'
                 }`}
-                onClick={() => setActiveTab('resources')}
+                onClick={() => setActiveTab('announcements')}
               >
-                <BookOpen className="h-4 w-4 mr-2" />
-                Lecture & Study Resources
+                <Bell className="h-4 w-4 mr-2" />
+                Announcements
               </button>
               <button
                 className={`px-6 py-4 font-medium text-center flex items-center ${
@@ -270,11 +344,28 @@ const AssignedClass = () => {
             </div>
           )}
 
-          {activeTab === 'resources' && (
+          {activeTab === 'announcements' && (
             <div>
-              {/* Resources Content */}
-              <h2 className="text-xl font-bold text-indigo-900 mb-4">Lecture & Study Resources</h2>
-              <p>Manage your study materials here.</p>
+              {/* Announcements Content */}
+              <h2 className="text-xl font-bold text-indigo-900 mb-4 flex items-center">
+                <Bell className="h-5 w-5 mr-2" />
+                Announcements
+              </h2>
+              {allAnnouncements.length === 0 ? (
+                <p className="text-indigo-600">No announcements yet.</p>
+              ) : (
+                <ul className="space-y-3">
+                  {allAnnouncements.map((a) => (
+                    <li key={a.id} className="bg-indigo-50 border-l-4 border-indigo-400 p-4 rounded shadow-sm">
+                      <div className="flex justify-between items-center">
+                        <span className="font-semibold text-indigo-800">{a.title}</span>
+                        <span className="text-xs text-indigo-400">{a.date}</span>
+                      </div>
+                      <div className="text-indigo-700 mt-1">{a.content}</div>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           )}
 

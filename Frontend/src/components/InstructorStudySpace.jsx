@@ -47,10 +47,17 @@ const StudyPage = () => {
   const [activeTab, setActiveTab] = useState('workspace')
   const [useRagAssistant, setUseRagAssistant] = useState(false)
   const [isAssistantOpen, setIsAssistantOpen] = useState(true)
+  const [chapters, setChapters] = useState([
+  { id: 1, name: "Introduction" },
+  { id: 2, name: "Algebra Basics" },
+  { id: 3, name: "Geometry" },
+  { id: 4, name: "Trigonometry" },
+  { id: 5, name: "Calculus" }
+]);
 
   const navigate = useNavigate()
   const { classId } = useParams()
-  const userRole = localStorage.getItem("userRole") || "student"
+  const userRole = localStorage.getItem("userRole") || "instructor"
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -74,10 +81,15 @@ const StudyPage = () => {
     setStudyMaterials((prev) => prev.filter((material) => material.id !== id));
   };
 
-  const handleGoBack = () => {
-    navigate(`/${userRole}`);
-  };
+  //use this once db gets userrole
+  // const handleGoBack = () => {
+  //   navigate(`/${userRole}`);
+  // };
 
+    // until then for routing
+  const handleGoBack = () => {
+  navigate(`/instructor/class/${classId}`);
+};
   // Scroll chat to bottom on new message
   useEffect(() => {
     if (chatContainerRef.current) {
@@ -191,49 +203,59 @@ const StudyPage = () => {
       {/* -------------------- Toolbar (Tools) -------------------- */}
       <div className="flex-shrink-0 bg-indigo-50 border-b border-indigo-100 py-1 px-4">
         <div className="flex items-center space-x-2">
-          {/* Sidebar Toggle */}
-          <button
-            onClick={() => setIsToolbarOpen(!isToolbarOpen)}
-            className="p-1.5 hover:bg-indigo-100 rounded-md transition duration-300"
-          >
-            <Menu className="h-5 w-5 text-indigo-600" />
-          </button>
-          {/* Lecture Viewer */}
-          <button
-            onClick={() => setSelectedTool('video')}
-            className={`p-2 rounded-md ${selectedTool === 'video' ? 'bg-indigo-200' : 'hover:bg-indigo-100'}`}
-          >
-            <BookOpen className="h-5 w-5 text-indigo-600" />
-          </button>
-          {/* Whiteboard */}
-          <button
-            onClick={toggleWhiteboard}
-            className={`p-2 rounded-md ${selectedTool === 'whiteboard' ? 'bg-indigo-200' : 'hover:bg-indigo-100'}`}
-          >
-            <Edit className="h-5 w-5 text-indigo-600" />
-          </button>
-          {/* Assignment and Quiz Generation */}
-          <button
-            onClick={() => setSelectedTool('assignments')}
-            className={`p-2 rounded-md ${selectedTool === 'assignments' ? 'bg-indigo-200' : 'hover:bg-indigo-100'}`}
-          >
-            <Table className="h-5 w-5 text-indigo-600" />
-          </button>
-          {/* Material Upload and Management */}
-          <button
-            onClick={() => setSelectedTool('materials')}
-            className={`p-2 rounded-md ${selectedTool === 'materials' ? 'bg-indigo-200' : 'hover:bg-indigo-100'}`}
-          >
-            <Upload className="h-5 w-5 text-indigo-600" />
-          </button>
-          {/* RAG Assistant */}
-          <button
-            onClick={toggleRagAssistant}
-            className={`p-2 rounded-md ${useRagAssistant ? 'bg-teal-200' : 'hover:bg-indigo-100'}`}
-            title="AI Study Assistant (RAG)"
-          >
-            <Database className="h-5 w-5 text-teal-600" />
-          </button>
+         {/* Sidebar Toggle */}
+<button
+  onClick={() => setIsToolbarOpen(!isToolbarOpen)}
+  className="p-1.5 hover:bg-indigo-100 rounded-md transition duration-300"
+  
+>
+  <Menu className="h-5 w-5 text-indigo-600" />
+</button>
+
+{/* Lecture Viewer */}
+<button
+  onClick={() => setSelectedTool('video')}
+  className={`p-2 rounded-md ${selectedTool === 'video' ? 'bg-indigo-200' : 'hover:bg-indigo-100'}`}
+  title="Lecture Space"
+>
+  <BookOpen className="h-5 w-5 text-indigo-600" />
+</button>
+
+{/* Whiteboard */}
+<button
+  onClick={toggleWhiteboard}
+  className={`p-2 rounded-md ${selectedTool === 'whiteboard' ? 'bg-indigo-200' : 'hover:bg-indigo-100'}`}
+  title="Whiteboard"
+>
+  <Edit className="h-5 w-5 text-indigo-600" />
+</button>
+
+{/* Assignment and Quiz Generation */}
+<button
+  onClick={() => setSelectedTool('assignments')}
+  className={`p-2 rounded-md ${selectedTool === 'assignments' ? 'bg-indigo-200' : 'hover:bg-indigo-100'}`}
+  title="Generate Quiz & Assignment"
+>
+  <Table className="h-5 w-5 text-indigo-600" />
+</button>
+
+{/* Material Upload and Management */}
+<button
+  onClick={() => setSelectedTool('materials')}
+  className={`p-2 rounded-md ${selectedTool === 'materials' ? 'bg-indigo-200' : 'hover:bg-indigo-100'}`}
+  title="Upload Lecture Materials"
+>
+  <Upload className="h-5 w-5 text-indigo-600" />
+</button>
+
+{/* RAG Assistant */}
+<button
+  onClick={toggleRagAssistant}
+  className={`p-2 rounded-md ${useRagAssistant ? 'bg-teal-200' : 'hover:bg-indigo-100'}`}
+  title="AI Study Assistant (RAG)"
+>
+  <Database className="h-5 w-5 text-teal-600" />
+</button>
         </div>
       </div>
 
@@ -244,30 +266,30 @@ const StudyPage = () => {
       <div className="flex flex-1 overflow-hidden relative">
         {/* ----------- Sidebar: Study Plan ----------- */}
         {isToolbarOpen && (
-          <aside className="w-64 bg-white border-r border-indigo-100 flex flex-col overflow-hidden">
-            <div className="p-3 border-b border-indigo-100 flex-shrink-0">
-              <h3 className="font-medium text-indigo-800">Study Plan</h3>
-            </div>
-            <div className="p-2 flex-1 overflow-y-auto">
-              <div className="space-y-1">
-                {[1, 2, 3, 4, 5].map((day) => (
-                  <button
-                    key={day}
-                    onClick={() => setSelectedDay(day)}
-                    className={`w-full flex items-center px-3 py-2 rounded-md transition duration-300 ${
-                      selectedDay === day 
-                        ? 'bg-indigo-100 text-indigo-800' 
-                        : 'text-indigo-600 hover:bg-indigo-50'
-                    }`}
-                  >
-                    <Calendar className="w-4 h-4 min-w-[16px]" />
-                    <span className="ml-2">Day {day}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </aside>
-        )}
+  <aside className="w-64 bg-white border-r border-indigo-100 flex flex-col overflow-hidden">
+    <div className="p-3 border-b border-indigo-100 flex-shrink-0">
+      <h3 className="font-medium text-indigo-800">Chapters</h3>
+    </div>
+    <div className="p-2 flex-1 overflow-y-auto">
+      <div className="space-y-1">
+        {chapters.map((chapter) => (
+          <button
+            key={chapter.id}
+            onClick={() => setSelectedDay(chapter.id)}
+            className={`w-full flex items-center px-3 py-2 rounded-md transition duration-300 ${
+              selectedDay === chapter.id
+                ? 'bg-indigo-100 text-indigo-800'
+                : 'text-indigo-600 hover:bg-indigo-50'
+            }`}
+          >
+            <Calendar className="w-4 h-4 min-w-[16px]" />
+            <span className="ml-2">{chapter.name}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  </aside>
+)}
 
         {/* ----------- Main Content: Workspace ----------- */}
         <div
@@ -332,7 +354,7 @@ const StudyPage = () => {
 
             {selectedTool === 'assignments' && (
               <div>
-                <h2 className="text-xl font-bold text-indigo-900 mb-4">Assignment and Quiz Generation</h2>
+                
                 <p>Here you can generate assignments and quizzes for your class.</p>
                 {/* Add your assignment and quiz generation logic here */}
               </div>
@@ -340,7 +362,7 @@ const StudyPage = () => {
 
             {selectedTool === 'materials' && (
               <div>
-                <h2 className="text-xl font-bold text-indigo-900 mb-4">Study Materials</h2>
+                
                 <label
                   htmlFor="upload-material"
                   className="mb-4 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 cursor-pointer flex items-center w-fit"
