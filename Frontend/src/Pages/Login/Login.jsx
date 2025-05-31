@@ -56,16 +56,25 @@ const LoginPage = () => {
 
       const userId = loginData.user.id;
 
+      // Query user_profiles table to get role_id for the authenticated user
       const { data: profileData, error: profileError } = await supabase
-        .from("profiles")
+        .from("user_profiles")
         .select("role_id")
         .eq("user_id", userId)
         .single();
 
       if (profileError) {
-        throw profileError;
+        console.error("Profile query error:", profileError);
+        setError("Unable to fetch user profile. Please contact support.");
+        return;
       }
 
+      if (!profileData || !profileData.role_id) {
+        setError("User profile not found. Please contact support.");
+        return;
+      }
+
+      // Route based on role_id
       switch (profileData.role_id) {
         case 1:
           navigate("/admin", { replace: true });
@@ -82,7 +91,11 @@ const LoginPage = () => {
       }
     } catch (err) {
       console.error("Login error:", err);
-      setError("Invalid email, password, or role.");
+      if (err.message.includes("Invalid login credentials")) {
+        setError("Invalid email or password.");
+      } else {
+        setError("Login failed. Please try again.");
+      }
     } finally {
       setIsLoading(false);
     }
