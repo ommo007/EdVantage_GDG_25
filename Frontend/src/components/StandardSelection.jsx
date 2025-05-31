@@ -1,4 +1,3 @@
-"use client";
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -11,21 +10,7 @@ import {
 
 import DashboardHeader from "./shared/DashboardHeader";
 import SearchBar from "./dashboard/SearchBar";
-
-const mockClasses = [
-  { id: 1, name: "Jr. KG", totalDivisions: 2, totalStudents: 50 },
-  { id: 2, name: "Sr. KG", totalDivisions: 2, totalStudents: 55 },
-  { id: 3, name: "1st Std", totalDivisions: 3, totalStudents: 60 },
-  { id: 4, name: "2nd Std", totalDivisions: 3, totalStudents: 65 },
-  { id: 5, name: "3rd Std", totalDivisions: 3, totalStudents: 70 },
-  { id: 6, name: "4th Std", totalDivisions: 3, totalStudents: 75 },
-  { id: 7, name: "5th Std", totalDivisions: 3, totalStudents: 80 },
-  { id: 8, name: "6th Std", totalDivisions: 3, totalStudents: 85 },
-  { id: 9, name: "7th Std", totalDivisions: 3, totalStudents: 90 },
-  { id: 10, name: "8th Std", totalDivisions: 3, totalStudents: 95 },
-  { id: 11, name: "9th Std", totalDivisions: 3, totalStudents: 100 },
-  { id: 12, name: "10th Std", totalDivisions: 3, totalStudents: 110 },
-];
+import { getStandardsSummary } from "../services/admin_service";
 
 const ClassSelection = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -40,8 +25,8 @@ const ClassSelection = () => {
   const fetchClasses = async () => {
     try {
       setIsLoading(true);
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call delay
-      setClasses(mockClasses);
+      const standards = await getStandardsSummary();
+      setClasses(standards);
     } catch (err) {
       console.error("Error fetching classes:", err);
     } finally {
@@ -110,7 +95,7 @@ const ClassSelection = () => {
                   <div 
                     className="flex items-center text-indigo-600 font-medium cursor-pointer"
                     onClick={(e) => {
-                      e.stopPropagation(); // Prevent the card's onClick from triggering
+                      e.stopPropagation();
                       handleClassSelect(cls.id);
                     }}
                   >

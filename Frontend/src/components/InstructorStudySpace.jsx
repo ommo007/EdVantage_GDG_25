@@ -1,11 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
 import { useNavigate, useParams } from "react-router-dom"
-import { useRef, useEffect } from "react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm";
 import { Link as LinkIcon } from "lucide-react";
+
 import { 
   ChevronDown, 
   User, 
@@ -37,8 +37,7 @@ const StudyPage = () => {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const [isToolbarOpen, setIsToolbarOpen] = useState(true)
   const [messages, setMessages] = useState([
-    { id: 1, text: "Hello, I need help with my math homework.", sender: "user" },
-    { id: 2, text: "Of course! I'd be happy to help. What specific topic in math are you working on?", sender: "bot" },
+    { id: 1, text: "Hello, I'm balmitra, an AI assistant. 👋 How can I help you today?", sender: "bot" },
   ])
   const [inputMessage, setInputMessage] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -48,12 +47,12 @@ const StudyPage = () => {
   const [useRagAssistant, setUseRagAssistant] = useState(false)
   const [isAssistantOpen, setIsAssistantOpen] = useState(true)
   const [chapters, setChapters] = useState([
-  { id: 1, name: "Introduction" },
-  { id: 2, name: "Algebra Basics" },
-  { id: 3, name: "Geometry" },
-  { id: 4, name: "Trigonometry" },
-  { id: 5, name: "Calculus" }
-]);
+    { id: 1, name: "Introduction" },
+    { id: 2, name: "Algebra Basics" },
+    { id: 3, name: "Geometry" },
+    { id: 4, name: "Trigonometry" },
+    { id: 5, name: "Calculus" }
+  ]);
 
   const navigate = useNavigate()
   const { classId } = useParams()
@@ -86,10 +85,11 @@ const StudyPage = () => {
   //   navigate(`/${userRole}`);
   // };
 
-    // until then for routing
+  // until then for routing
   const handleGoBack = () => {
-  navigate(`/instructor/class/${classId}`);
-};
+    navigate(`/instructor/class/${classId}`);
+  };
+
   // Scroll chat to bottom on new message
   useEffect(() => {
     if (chatContainerRef.current) {
@@ -97,57 +97,79 @@ const StudyPage = () => {
     }
   }, [messages]);
 
+  // AI Assistant logic
   const handleSendMessage = async () => {
-    if (!inputMessage.trim()) return
+    if (!inputMessage.trim()) return;
 
     const newUserMessage = {
       id: messages.length + 1,
       text: inputMessage,
       sender: "user",
-    }
-    setMessages((prev) => [...prev, newUserMessage])
-    setInputMessage("")
-    setIsLoading(true)
+    };
+    setMessages((prev) => [...prev, newUserMessage]);
+    const currentMessage = inputMessage;
+    setInputMessage("");
+    setIsLoading(true);
+
+console.log("Sending message to API:", currentMessage);
 
     try {
-      setTimeout(() => {
-        const botMessage = {
-          id: messages.length + 2,
-          text: "Here is a helpful video: https://www.youtube.com/watch?v=i35AUg11hvo",
-          sender: "bot",
-        }
-        setMessages((prev) => [...prev, botMessage])
-        setIsLoading(false)
-      }, 1000)
+      const response = await fetch('https://edvantage-gdg-25.onrender.com/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: currentMessage }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        throw new Error(`API responded with status: ${response.status}. ${errorData}`);
+      }
+
+      
+      const data = await response.json();
+  console.log("Instructor API response:", data); // <-- Add here
+      const botMessage = {
+        id: messages.length + 2,
+        text: data.response || "I couldn't generate a proper response. Please try again.",
+        sender: "bot",
+      };
+
+      setMessages((prev) => [...prev, botMessage]);
     } catch (error) {
-      console.error("Error:", error)
-      setIsLoading(false)
+      const errorMessage = {
+        id: messages.length + 2,
+        text: "Sorry, I'm having trouble connecting to the learning assistant. Please try again later.",
+        sender: "bot",
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleKeyPress = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault()
-      handleSendMessage()
+      e.preventDefault();
+      handleSendMessage();
     }
-  }
+  };
 
   const handleVideoLinkClick = (message) => {
-    const urlMatch = message.text.match(/https?:\/\/[\w./?=&%-]+/)
+    const urlMatch = message.text.match(/https?:\/\/[\w./?=&%-]+/);
     if (urlMatch) {
-      setVideoUrl(urlMatch[0])
-      setSelectedTool('video')
+      setVideoUrl(urlMatch[0]);
+      setSelectedTool('video');
     }
-  }
+  };
 
   const toggleWhiteboard = () => {
-    setIsWhiteboardOpen(!isWhiteboardOpen)
-    setSelectedTool('whiteboard')
-  }
+    setIsWhiteboardOpen(!isWhiteboardOpen);
+    setSelectedTool('whiteboard');
+  };
 
   const toggleRagAssistant = () => {
-    setUseRagAssistant(!useRagAssistant)
-  }
+    setUseRagAssistant(!useRagAssistant);
+  };
 
   return (
     <div className="h-screen max-h-screen overflow-hidden flex flex-col bg-gradient-to-br from-indigo-50 to-white">
@@ -203,59 +225,58 @@ const StudyPage = () => {
       {/* -------------------- Toolbar (Tools) -------------------- */}
       <div className="flex-shrink-0 bg-indigo-50 border-b border-indigo-100 py-1 px-4">
         <div className="flex items-center space-x-2">
-         {/* Sidebar Toggle */}
-<button
-  onClick={() => setIsToolbarOpen(!isToolbarOpen)}
-  className="p-1.5 hover:bg-indigo-100 rounded-md transition duration-300"
-  
->
-  <Menu className="h-5 w-5 text-indigo-600" />
-</button>
+          {/* Sidebar Toggle */}
+          <button
+            onClick={() => setIsToolbarOpen(!isToolbarOpen)}
+            className="p-1.5 hover:bg-indigo-100 rounded-md transition duration-300"
+          >
+            <Menu className="h-5 w-5 text-indigo-600" />
+          </button>
 
-{/* Lecture Viewer */}
-<button
-  onClick={() => setSelectedTool('video')}
-  className={`p-2 rounded-md ${selectedTool === 'video' ? 'bg-indigo-200' : 'hover:bg-indigo-100'}`}
-  title="Lecture Space"
->
-  <BookOpen className="h-5 w-5 text-indigo-600" />
-</button>
+          {/* Lecture Viewer */}
+          <button
+            onClick={() => setSelectedTool('video')}
+            className={`p-2 rounded-md ${selectedTool === 'video' ? 'bg-indigo-200' : 'hover:bg-indigo-100'}`}
+            title="Lecture Space"
+          >
+            <BookOpen className="h-5 w-5 text-indigo-600" />
+          </button>
 
-{/* Whiteboard */}
-<button
-  onClick={toggleWhiteboard}
-  className={`p-2 rounded-md ${selectedTool === 'whiteboard' ? 'bg-indigo-200' : 'hover:bg-indigo-100'}`}
-  title="Whiteboard"
->
-  <Edit className="h-5 w-5 text-indigo-600" />
-</button>
+          {/* Whiteboard */}
+          <button
+            onClick={toggleWhiteboard}
+            className={`p-2 rounded-md ${selectedTool === 'whiteboard' ? 'bg-indigo-200' : 'hover:bg-indigo-100'}`}
+            title="Whiteboard"
+          >
+            <Edit className="h-5 w-5 text-indigo-600" />
+          </button>
 
-{/* Assignment and Quiz Generation */}
-<button
-  onClick={() => setSelectedTool('assignments')}
-  className={`p-2 rounded-md ${selectedTool === 'assignments' ? 'bg-indigo-200' : 'hover:bg-indigo-100'}`}
-  title="Generate Quiz & Assignment"
->
-  <Table className="h-5 w-5 text-indigo-600" />
-</button>
+          {/* Assignment and Quiz Generation */}
+          <button
+            onClick={() => setSelectedTool('assignments')}
+            className={`p-2 rounded-md ${selectedTool === 'assignments' ? 'bg-indigo-200' : 'hover:bg-indigo-100'}`}
+            title="Generate Quiz & Assignment"
+          >
+            <Table className="h-5 w-5 text-indigo-600" />
+          </button>
 
-{/* Material Upload and Management */}
-<button
-  onClick={() => setSelectedTool('materials')}
-  className={`p-2 rounded-md ${selectedTool === 'materials' ? 'bg-indigo-200' : 'hover:bg-indigo-100'}`}
-  title="Upload Lecture Materials"
->
-  <Upload className="h-5 w-5 text-indigo-600" />
-</button>
+          {/* Material Upload and Management */}
+          <button
+            onClick={() => setSelectedTool('materials')}
+            className={`p-2 rounded-md ${selectedTool === 'materials' ? 'bg-indigo-200' : 'hover:bg-indigo-100'}`}
+            title="Upload Lecture Materials"
+          >
+            <Upload className="h-5 w-5 text-indigo-600" />
+          </button>
 
-{/* RAG Assistant */}
-<button
-  onClick={toggleRagAssistant}
-  className={`p-2 rounded-md ${useRagAssistant ? 'bg-teal-200' : 'hover:bg-indigo-100'}`}
-  title="AI Study Assistant (RAG)"
->
-  <Database className="h-5 w-5 text-teal-600" />
-</button>
+          {/* RAG Assistant */}
+          <button
+            onClick={toggleRagAssistant}
+            className={`p-2 rounded-md ${useRagAssistant ? 'bg-teal-200' : 'hover:bg-indigo-100'}`}
+            title="AI Study Assistant (RAG)"
+          >
+            <Database className="h-5 w-5 text-teal-600" />
+          </button>
         </div>
       </div>
 
@@ -266,30 +287,30 @@ const StudyPage = () => {
       <div className="flex flex-1 overflow-hidden relative">
         {/* ----------- Sidebar: Study Plan ----------- */}
         {isToolbarOpen && (
-  <aside className="w-64 bg-white border-r border-indigo-100 flex flex-col overflow-hidden">
-    <div className="p-3 border-b border-indigo-100 flex-shrink-0">
-      <h3 className="font-medium text-indigo-800">Chapters</h3>
-    </div>
-    <div className="p-2 flex-1 overflow-y-auto">
-      <div className="space-y-1">
-        {chapters.map((chapter) => (
-          <button
-            key={chapter.id}
-            onClick={() => setSelectedDay(chapter.id)}
-            className={`w-full flex items-center px-3 py-2 rounded-md transition duration-300 ${
-              selectedDay === chapter.id
-                ? 'bg-indigo-100 text-indigo-800'
-                : 'text-indigo-600 hover:bg-indigo-50'
-            }`}
-          >
-            <Calendar className="w-4 h-4 min-w-[16px]" />
-            <span className="ml-2">{chapter.name}</span>
-          </button>
-        ))}
-      </div>
-    </div>
-  </aside>
-)}
+          <aside className="w-64 bg-white border-r border-indigo-100 flex flex-col overflow-hidden">
+            <div className="p-3 border-b border-indigo-100 flex-shrink-0">
+              <h3 className="font-medium text-indigo-800">Chapters</h3>
+            </div>
+            <div className="p-2 flex-1 overflow-y-auto">
+              <div className="space-y-1">
+                {chapters.map((chapter) => (
+                  <button
+                    key={chapter.id}
+                    onClick={() => setSelectedDay(chapter.id)}
+                    className={`w-full flex items-center px-3 py-2 rounded-md transition duration-300 ${
+                      selectedDay === chapter.id
+                        ? 'bg-indigo-100 text-indigo-800'
+                        : 'text-indigo-600 hover:bg-indigo-50'
+                    }`}
+                  >
+                    <Calendar className="w-4 h-4 min-w-[16px]" />
+                    <span className="ml-2">{chapter.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </aside>
+        )}
 
         {/* ----------- Main Content: Workspace ----------- */}
         <div
@@ -333,7 +354,7 @@ const StudyPage = () => {
                     }
                   >
                     <iframe
-                     key={videoUrl} 
+                      key={videoUrl} 
                       className="w-full h-full rounded-lg"
                       src={
                         videoUrl.replace("watch?v=", "embed/") +
@@ -354,7 +375,6 @@ const StudyPage = () => {
 
             {selectedTool === 'assignments' && (
               <div>
-                
                 <p>Here you can generate assignments and quizzes for your class.</p>
                 {/* Add your assignment and quiz generation logic here */}
               </div>
@@ -362,7 +382,6 @@ const StudyPage = () => {
 
             {selectedTool === 'materials' && (
               <div>
-                
                 <label
                   htmlFor="upload-material"
                   className="mb-4 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 cursor-pointer flex items-center w-fit"
@@ -426,42 +445,42 @@ const StudyPage = () => {
                         className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}
                       >
                         <div
-  className={`max-w-[80%] rounded-xl px-3 py-2 text-sm ${
-    message.sender === "user"
-      ? "bg-indigo-600 text-white border-r-4 border-indigo-400 pr-4 shadow"
-      : "bg-indigo-50 text-indigo-800 border-l-4 border-blue-400 pl-4"
-  }`}
-  onClick={() => handleVideoLinkClick(message)}
-  style={{ cursor: message.sender === "bot" ? "pointer" : "default" }}
->
-  {message.sender === "bot" ? (
-    <ReactMarkdown
-  remarkPlugins={[remarkGfm]}
-  components={{
-    a: ({node, ...props}) => (
-      <a
-        {...props}
-        className="inline-flex items-center gap-1 text-blue-600 underline hover:text-blue-800 cursor-pointer"
-        target="_blank"
-        rel="noopener noreferrer"
-        onClick={e => {
-          e.preventDefault();
-          handleVideoLinkClick(message);
-        }}
-      >
-        <LinkIcon className="w-4 h-4 inline" />
-        {props.children}
-      </a>
-    ),
-    p: ({node, ...props}) => <p {...props} className="mb-1" />
-  }}
->
-  {message.text}
-</ReactMarkdown>
-  ) : (
-    message.text
-  )}
-</div>
+                          className={`max-w-[80%] rounded-xl px-3 py-2 text-sm ${
+                            message.sender === "user"
+                              ? "bg-indigo-600 text-white border-r-4 border-indigo-400 pr-4 shadow"
+                              : "bg-indigo-50 text-indigo-800 border-l-4 border-blue-400 pl-4"
+                          }`}
+                          onClick={() => handleVideoLinkClick(message)}
+                          style={{ cursor: message.sender === "bot" ? "pointer" : "default" }}
+                        >
+                          {message.sender === "bot" ? (
+                            <ReactMarkdown
+                              remarkPlugins={[remarkGfm]}
+                              components={{
+                                a: ({node, ...props}) => (
+                                  <a
+                                    {...props}
+                                    className="inline-flex items-center gap-1 text-blue-600 underline hover:text-blue-800 cursor-pointer"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={e => {
+                                      e.preventDefault();
+                                      handleVideoLinkClick(message);
+                                    }}
+                                  >
+                                    <LinkIcon className="w-4 h-4 inline" />
+                                    {props.children}
+                                  </a>
+                                ),
+                                p: ({node, ...props}) => <p {...props} className="mb-1" />
+                              }}
+                            >
+                              {message.text}
+                            </ReactMarkdown>
+                          ) : (
+                            message.text
+                          )}
+                        </div>
                       </div>
                     ))}
                     {isLoading && (

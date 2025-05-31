@@ -94,50 +94,46 @@ const StudentStudySpace = () => {
   }, [selectedTool, classId]);
 
   // Send message to AI assistant
-  const handleSendMessage = async () => {
-    if (!inputMessage.trim()) return
+ const handleSendMessage = async () => {
+  if (!inputMessage.trim()) return;
 
-    const newUserMessage = {
-      id: messages.length + 1,
-      text: inputMessage,
-      sender: "user",
-    }
-    setMessages((prev) => [...prev, newUserMessage])
-    const currentMessage = inputMessage
-    setInputMessage("")
-    setIsLoading(true)
+  const newUserMessage = {
+    id: messages.length + 1,
+    text: inputMessage,
+    sender: "user",
+  };
+  setMessages((prev) => [...prev, newUserMessage]);
+  const currentMessage = inputMessage;
+  setInputMessage("");
+  setIsLoading(true);
 
-    try {
-      const response = await fetch('https://edvantage-gdg-25.onrender.com/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ message: currentMessage }),
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.text()
-        throw new Error(`API responded with status: ${response.status}. ${errorData}`)
-      }
-      
-      const data = await response.json()
-      const botMessage = {
-        id: messages.length + 2,
-        text: data.response || "I couldn't generate a proper response. Please try again.",
-        sender: "bot",
-      }
-      
-      setMessages((prev) => [...prev, botMessage])
-    } catch (error) {
-      const errorMessage = {
-        id: messages.length + 2,
-        text: "Sorry, I'm having trouble connecting to the learning assistant. Please try again later.",
-        sender: "bot",
-      }
-      setMessages((prev) => [...prev, errorMessage])
-    } finally {
-      setIsLoading(false)
+  try {
+    console.log("📤 Sending to AI API:", currentMessage);
+
+    const response = await fetch("https://edvantage-gdg-25.onrender.com/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: currentMessage, role: "student" }) // <<< ✅ add role
+    });
+
+    const raw = await response.text();
+    console.log("📥 Raw AI response:", raw);
+
+    const data = JSON.parse(raw);
+
+    const botMessage = {
+      id: messages.length + 2,
+      text: data.response || "⚠️ No response received.",
+      sender: "bot"
+    };
+
+    setMessages(prev => [...prev, botMessage]);
+
+  } catch (err) {
+    console.error("❌ AI API failed:", err);
+    setMessages(prev => [...prev, { id: messages.length + 2, text: "Sorry, the assistant is not responding.", sender: "bot" }]);
+  } finally {
+    setIsLoading(false);
     }
   }
 

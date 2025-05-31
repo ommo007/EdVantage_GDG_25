@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
@@ -18,65 +19,20 @@ import DashboardHeader from './shared/DashboardHeader';
 import StatCard from './shared/StatCard';
 import DashboardInitializer from './shared/DashboardInitializer';
 
-// Mock data for classroom details
-const mockClassroomData = {
-  standard5A: {
-    id: 'standard5A',
-    name: 'Standard 5',
-    section: 'A',
-    studentCount: 25,
-    subjects: ['Mathematics', 'Science', 'English'],
-    attendance: {
-      daily: 92,
-      weekly: 88,
-      monthly: 85,
-    },
-    performance: {
-      avgQuizScore: 76,
-      assignmentCompletion: 82,
-      participationRate: 78,
-    },
-    engagement: {
-      studySpaceTime: '4.2 hrs/week',
-      chatbotInteractions: 156,
-      liveParticipation: 84,
-    },
-    topStudents: [
-      { name: 'Alex Johnson', score: 95, avatar: 'AJ' },
-      { name: 'Priya Sharma', score: 92, avatar: 'PS' },
-      { name: 'Michael Wong', score: 90, avatar: 'MW' },
-    ],
-    recentAnnouncements: [
-      {
-        id: 1,
-        title: 'Mathematics Quiz',
-        date: '2025-04-05',
-        content: 'Quiz on Chapter 5 - Fractions and Decimals',
-      },
-      {
-        id: 2,
-        title: 'Science Project Deadline',
-        date: '2025-04-10',
-        content: 'Final submission for the Environmental Science project',
-      },
-    ],
-    studyMaterials: [
-      { id: 1, name: 'Mathematics Chapter 5 Notes', type: 'PDF' },
-      { id: 2, name: 'Science Experiment Guidelines', type: 'DOCX' },
-      { id: 3, name: 'English Grammar Exercises', type: 'PDF' },
-    ],
-  },
-};
+import { getClassDetails } from '../services/classroom_service';
+import { getSubjectsForClass } from '../services/material_service';
+import { getAnnouncements, createAnnouncement } from '../services/announcement_service';
+import { getStudentsByClassId } from '../services/student_service';
 
 const AssignedClass = () => {
   const { classId } = useParams();
   const navigate = useNavigate();
+
   const [classData, setClassData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
-  const [selectedSubject, setSelectedSubject] = useState("");
-  // Announcement modal and state
+  const [selectedSubject, setSelectedSubject] = useState('');
   const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
   const [announcementTitle, setAnnouncementTitle] = useState('');
   const [announcementDesc, setAnnouncementDesc] = useState('');
@@ -87,44 +43,68 @@ const AssignedClass = () => {
   }, [classId]);
 
   const fetchClassroomData = async () => {
+  try {
+    setIsLoading(true);
+
+    const classDetails = await getClassDetails(classId); // Supabase → classes
+    const subjects = await getSubjectsForClass(classId); // Supabase → class_subjects + subjects
+    const announcementsData = await getAnnouncements(classId);
+    const students = await getStudentsByClassId(classId);
+
+    setClassData({
+      ...classDetails,
+      subjects: subjects.map(s => s.name || s),
+      studentCount: students.length,
+      section: classDetails.section, // ✅ Use actual section/division now
+      attendance: {
+        daily: 92,
+        weekly: 88,
+        monthly: 85,
+      },
+      performance: {
+        avgQuizScore: 76,
+        assignmentCompletion: 82,
+        participationRate: 78,
+      },
+      engagement: {
+        studySpaceTime: '4.2 hrs/week',
+        chatbotInteractions: 156,
+        liveParticipation: 84,
+      },
+    });
+
+    setAnnouncements(announcementsData);
+  } catch (err) {
+    console.error(err);
+    setError('Failed to load classroom data');
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+ const handleAddAnnouncement = async () => {
+  if (!announcementTitle.trim() || !announcementDesc.trim()) {
+    alert("Please fill in both title and description.");
+    return;
+  }
+
+  const newAnnouncement = {
+    title: announcementTitle,
+    content: announcementDesc,
+    publish_date: new Date().toISOString(),
+  };
+
+
     try {
-      setIsLoading(true);
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      // Fetch data based on classId
-      const data = mockClassroomData[classId] || Object.values(mockClassroomData)[0];
-      setClassData(data);
-    } catch (err) {
-      setError('Failed to load classroom data');
-    } finally {
-      setIsLoading(false);
+      const saved = await createAnnouncement(classId, newAnnouncement);
+      setAnnouncements((prev) => [saved, ...prev]);
+      setAnnouncementTitle('');
+      setAnnouncementDesc('');
+      setShowAnnouncementModal(false);
+    } catch (e) {
+      alert("Failed to save announcement");
     }
   };
-
-  // Add announcement handler
-  const handleAddAnnouncement = () => {
-    if (!announcementTitle.trim() || !announcementDesc.trim()) {
-      alert("Please fill in both title and description.");
-      return;
-    }
-    const newAnnouncement = {
-      id: Date.now(),
-      title: announcementTitle,
-      date: new Date().toISOString().split('T')[0],
-      content: announcementDesc,
-    };
-    setAnnouncements((prev) => [newAnnouncement, ...prev]);
-    setAnnouncementTitle('');
-    setAnnouncementDesc('');
-    setShowAnnouncementModal(false);
-    // In future: send to backend API here
-  };
-
-  // Merge mock and new announcements for display
-  const allAnnouncements = [
-    ...(announcements || []),
-    ...((classData?.recentAnnouncements) || [])
-  ];
 
   if (isLoading) {
     return (
@@ -172,9 +152,9 @@ const AssignedClass = () => {
                 </h1>
               </div>
               <p className="text-indigo-600 mt-2">
-                {classData.subjects.join(', ')} • {classData.studentCount} Students
+                {classData.subjects?.join(', ') || 'No subjects'} • {classData.studentCount} Students
               </p>
-              {/* Enhanced Subject Dropdown */}
+
               <div className="mt-2 relative group">
                 <select
                   value={selectedSubject}
@@ -190,7 +170,7 @@ const AssignedClass = () => {
                     </option>
                   ))}
                 </select>
-                {/* Custom dropdown arrow with animation */}
+
                 <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
                   <svg
                     className="w-5 h-5 text-indigo-500 group-hover:text-indigo-600 transition-all duration-300 group-focus-within:rotate-180"
@@ -203,8 +183,8 @@ const AssignedClass = () => {
                 </div>
               </div>
             </div>
+
             <div className="flex items-center space-x-4">
-              {/* Add Announcement Button */}
               <button
                 className="bg-indigo-600 text-white px-4 py-2 rounded-md transition duration-300 flex items-center hover:bg-indigo-700"
                 onClick={() => setShowAnnouncementModal(true)}
@@ -316,50 +296,28 @@ const AssignedClass = () => {
 
           {/* Tab Content */}
           {activeTab === 'overview' && (
-            <div>
-              {/* Overview Content */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <StatCard
-                  icon={<UserCheck className="h-6 w-6 text-indigo-600" />}
-                  title="Daily Attendance"
-                  value={`${classData.attendance.daily}%`}
-                  bgColor="bg-indigo-100"
-                  textColor="text-indigo-700"
-                />
-                <StatCard
-                  icon={<Award className="h-6 w-6 text-purple-600" />}
-                  title="Avg. Quiz Score"
-                  value={`${classData.performance.avgQuizScore}%`}
-                  bgColor="bg-purple-100"
-                  textColor="text-purple-700"
-                />
-                <StatCard
-                  icon={<CheckCircle className="h-6 w-6 text-green-600" />}
-                  title="Assignment Completion"
-                  value={`${classData.performance.assignmentCompletion}%`}
-                  bgColor="bg-green-100"
-                  textColor="text-green-700"
-                />
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <StatCard icon={<UserCheck className="h-6 w-6 text-indigo-600" />} title="Daily Attendance" value={`${classData.attendance.daily}%`} bgColor="bg-indigo-100" textColor="text-indigo-700" />
+              <StatCard icon={<Award className="h-6 w-6 text-purple-600" />} title="Avg. Quiz Score" value={`${classData.performance.avgQuizScore}%`} bgColor="bg-purple-100" textColor="text-purple-700" />
+              <StatCard icon={<CheckCircle className="h-6 w-6 text-green-600" />} title="Assignment Completion" value={`${classData.performance.assignmentCompletion}%`} bgColor="bg-green-100" textColor="text-green-700" />
             </div>
           )}
 
           {activeTab === 'announcements' && (
             <div>
-              {/* Announcements Content */}
               <h2 className="text-xl font-bold text-indigo-900 mb-4 flex items-center">
                 <Bell className="h-5 w-5 mr-2" />
                 Announcements
               </h2>
-              {allAnnouncements.length === 0 ? (
+              {announcements.length === 0 ? (
                 <p className="text-indigo-600">No announcements yet.</p>
               ) : (
                 <ul className="space-y-3">
-                  {allAnnouncements.map((a) => (
-                    <li key={a.id} className="bg-indigo-50 border-l-4 border-indigo-400 p-4 rounded shadow-sm">
+                  {announcements.map((a) => (
+                    <li key={a.announcement_id} className="bg-indigo-50 border-l-4 border-indigo-400 p-4 rounded shadow-sm">
                       <div className="flex justify-between items-center">
                         <span className="font-semibold text-indigo-800">{a.title}</span>
-                        <span className="text-xs text-indigo-400">{a.date}</span>
+                        <span className="text-xs text-indigo-400">{new Date(a.publish_date).toLocaleDateString()}</span>
                       </div>
                       <div className="text-indigo-700 mt-1">{a.content}</div>
                     </li>
@@ -371,9 +329,8 @@ const AssignedClass = () => {
 
           {activeTab === 'students' && (
             <div>
-              {/* Students Content */}
               <h2 className="text-xl font-bold text-indigo-900 mb-4">Student Management</h2>
-              <p>Manage your students here.</p>
+              <p className="text-indigo-700">Manage your students here. (Coming soon – currently showing stub)</p>
             </div>
           )}
         </main>
