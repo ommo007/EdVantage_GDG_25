@@ -31,36 +31,38 @@ const StudentClassInterface = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setIsLoading(true);
+  const fetchData = async () => {
+    try {
+      setIsLoading(true);
 
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-        if (userError || !user) throw new Error("User not logged in");
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      console.log("StudentClassInterface: user =", user);
+      if (userError || !user) throw new Error("User not logged in");
 
-        const classDetails = await getStudentClassDetails(user.id);
-        setClassData(classDetails);
+      const classDetails = await getStudentClassDetails(user.id);
+      console.log("StudentClassInterface: classDetails =", classDetails);
+      setClassData(classDetails);
 
-        const classAnnouncements = await getAnnouncements(classDetails.id);
-        setAnnouncements(classAnnouncements);
+      const classAnnouncements = await getAnnouncements(classDetails.id);
+      setAnnouncements(classAnnouncements);
 
-      } catch (err) {
-        console.error("Failed to load student class info:", err);
-        setError("Failed to load class information. Please try again.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    } catch (err) {
+      console.error("Failed to load student class info:", err);
+      setError("Failed to load class information. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    fetchData();
-  }, []);
+  fetchData();
+}, []);
 
   const handleSubjectChange = (e) => {
     const subjectId = e.target.value;
     setSelectedSubject(subjectId);
-    if (subjectId) {
-      navigate(`/student/study-space/${subjectId}`);
-    }
+    // if (subjectId) {
+    //   navigate(`/student/study-space/${subjectId}`);
+    // }
   };
 
   const handleEnterStudySpace = () => {
@@ -109,29 +111,40 @@ const StudentClassInterface = () => {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
               <div className="flex items-center mb-2">
-                <Link to="/student" className="text-indigo-600 mr-2 hover:text-indigo-800">
-                  <ArrowRight className="h-5 w-5 rotate-180" />
-                </Link>
-                <h1 className="text-3xl font-bold text-indigo-900">
-                  {classData.name} <span className="text-purple-600">Section {classData.section}</span>
-                </h1>
-              </div>
+  <h1 className="text-3xl font-bold text-indigo-900">
+    {classData.name} <span className="text-purple-600">Section {classData.section}</span>
+  </h1>
+</div>
 
               <div className="flex items-center gap-4 mt-2 text-indigo-700">
                 <User className="h-5 w-5 mr-2" />
-                <span className="font-medium">{classData.teacher.name}</span>
+  <span className="font-medium">
+    {classData.teachers && classData.teachers.length > 0
+      ? classData.teachers.join(", ")
+      : "No teacher assigned"}
+  </span>
 
                 <div className="relative group">
                   <select
                     value={selectedSubject}
                     onChange={handleSubjectChange}
-                    className="pl-3 pr-10 py-2 border rounded-lg text-indigo-700 bg-white"
+                    className="w-full appearance-none px-4 pr-10 py-3 bg-gradient-to-r from-white to-indigo-50 border-2 border-indigo-200 rounded-lg text-indigo-700 font-medium shadow-sm hover:shadow-md hover:border-indigo-300 focus:outline-none focus:ring-3 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all duration-300 ease-in-out cursor-pointer"
                   >
                     <option value="">📚 Select Subject</option>
                     {classData.subjects.map((subject, index) => (
                       <option key={index} value={subject.id}>{subject.name}</option>
                     ))}
                   </select>
+                  <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+    <svg
+      className="w-5 h-5 text-indigo-500 group-hover:text-indigo-600 transition-all duration-300 group-focus-within:rotate-180"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+    </svg>
+    </div>
                 </div>
               </div>
             </div>

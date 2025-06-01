@@ -32,44 +32,67 @@ export async function removeStudent(studentId) {
 }
 
 export async function getStudentClassDetails(studentId) {
+  // Step 1: Get enrollment and class info
   const { data, error } = await supabase
     .from('student_enrollments')
     .select(`
       class_id,
-      enrollment_date,
-      academic_year,
       classes (
         class_id,
         name,
         section,
         academic_year
-      ),
-      class_subjects (
-        subject_id,
-        subjects (
-          subject_id,
-          name
-        )
       )
     `)
     .eq('student_user_id', studentId)
     .single();
 
-  if (error) throw error;
+  if (error || !data) throw error || new Error("No enrollment found for this student.");
 
-  const subjects = (data.class_subjects || []).map(cs => ({
-    id: cs.subjects.subject_id,
-    name: cs.subjects.name
-  }));
+  // Step 2: Get subjects and teacher_user_id for this class
+  const { data: classSubjects, error: csError } = await supabase
+    .from('class_subjects')
+    .select(`
+      subject_id,
+      teacher_user_id,
+      subjects (
+        subject_id,
+        name
+      )
+    `)
+    .eq('class_id', data.class_id);
+
+  if (csError) throw csError;
+
+  // Step 3: Get teacher names
+  const teacherIds = [...new Set((classSubjects || []).map(cs => cs.teacher_user_id))];
+  let teachers = [];
+  if (teacherIds.length > 0) {
+    const { data: teacherProfiles, error: tError } = await supabase
+      .from('user_profiles')
+      .select('user_id, first_name, last_name')
+      .in('user_id', teacherIds);
+
+    if (tError) throw tError;
+    teachers = teacherProfiles;
+  }
+
+  // Step 4: Map subjects to teachers
+  const subjects = (classSubjects || []).map(cs => {
+    const teacher = teachers.find(t => t.user_id === cs.teacher_user_id);
+    return {
+      id: cs.subjects.subject_id,
+      name: cs.subjects.name,
+      teacher: teacher ? `${teacher.first_name} ${teacher.last_name}` : "Unknown"
+    };
+  });
 
   return {
     id: data.class_id,
-    name: data.classes.name,
-    section: data.classes.section,
-    academicYear: data.classes.academic_year,
-    teacher: {
-      name: "Your Class Teacher" // optional hardcoded
-    },
+    name: data.classes?.name || "Unknown",
+    section: data.classes?.section || "Unknown",
+    academicYear: data.classes?.academic_year || "Unknown",
+    teachers: teachers.map(t => `${t.first_name} ${t.last_name}`),
     subjects: subjects,
     performance: {
       totalQuizzes: 8,
