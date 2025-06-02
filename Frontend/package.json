@@ -54,7 +54,7 @@
 
     
 
-  "@supabase/supabase-js": "^2.49.4",
+  "@supabase/supabase-js": "^2.49.8",
   
 
     
@@ -89,7 +89,17 @@
 
     
 
+  "react-markdown": "^10.1.0",
+  
+
+    
+
   "react-router-dom": "^7.1.5",
+  
+
+    
+
+  "remark-gfm": "^4.0.1",
   
 
     
