@@ -75,37 +75,37 @@ function AppContent() {
           {/* Instructor Routes */}
          
          {/* Instructor Routes */}
-<Route path="/instructor" element={<InstructorDashboard />} />
-<Route path="/instructor/dashboard" element={<Navigate to="/instructor" replace />} />
+          <Route path="/instructor" element={<InstructorDashboard />} />
+          <Route path="/instructor/dashboard" element={<Navigate to="/instructor" replace />} />
 
-{/* 1️⃣ Instructor Dashboard (Assigned Classes) */}
-<Route path="/instructor/classes" element={<InstructorDashboard />} />
+          {/* 1️⃣ Instructor Dashboard (Assigned Classes) */}
+          <Route path="/instructor/classes" element={<InstructorDashboard />} />
 
-{/* 2️⃣ Assigned Class Interface (Class Analytics, Announcements, Lecture Materials) */}
-<Route path="/instructor/class/:classId" element={<AssignedClass />} />
+          {/* 2️⃣ Assigned Class Interface (Class Analytics, Announcements, Lecture Materials) */}
+          <Route path="/instructor/class/:classId" element={<AssignedClass />} />
 
-{/* 3️⃣ Instructor Study Space (Quiz & Assignment Generation, AI Assistance) */}
-<Route path="/instructor/class/:classId/study-space" element={<InstructorStudySpace />} />
-<Route path="/instructor/class/:classId/study-space/:subject" element={<InstructorStudySpace />} />
+          {/* 3️⃣ Instructor Study Space (Quiz & Assignment Generation, AI Assistance) */}
+          <Route path="/instructor/class/:classId/study-space" element={<InstructorStudySpace />} />
+          <Route path="/instructor/class/:classId/study-space/:subject" element={<InstructorStudySpace />} />
 
-{/* Additional Features */}
-<Route path="/instructor/study-materials/:classId" element={<StudyMaterialsManager />} />
-<Route path="/instructor/rag-analytics/:classId" element={<RagAnalytics />} />
+          {/* Additional Features */}
+          <Route path="/instructor/study-materials/:classId" element={<StudyMaterialsManager />} />
+          <Route path="/instructor/rag-analytics/:classId" element={<RagAnalytics />} />
 
-{/* Catch-All Redirect */}
-<Route path="/instructor/*" element={<Navigate to="/instructor" replace />} />
+          {/* Catch-All Redirect */}
+          <Route path="/instructor/*" element={<Navigate to="/instructor" replace />} />
 
 
           {/* Student Routes */}
-<Route path="/student" element={<StudentDashboard />} />
-<Route path="/student/dashboard" element={<Navigate to="/student" replace />} />
-
-{/* Study Page */}
-<Route path="/student/study-space/:classId" element={<StudentStudySpace />} />
-
-{/* Catch-all */}
-<Route path="/student/*" element={<Navigate to="/student" replace />} />
-
+          <Route path="/student" element={<StudentDashboard />} />
+          <Route path="/student/dashboard" element={<Navigate to="/student" replace />} />
+            
+          {/* Study Page */}
+          <Route path="/student/study-space/:subjectId" element={<StudentStudySpace />} />
+            
+          {/* Catch-all */}
+          <Route path="/student/*" element={<Navigate to="/student" replace />} />
+            
 
           {/* Legacy Route Redirects */}
           <Route path="/teacherdash" element={<Navigate to="/instructor" replace />} />

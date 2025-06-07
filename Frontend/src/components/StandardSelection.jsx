@@ -38,9 +38,29 @@ const ClassSelection = () => {
     navigate(`/admin/${standardId}`);
   };
 
-  const filteredClasses = classes.filter(
-    cls => cls.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  function classSortKey(name) {
+  const n = name.trim().toLowerCase();
+  if (n.startsWith("jr")) return [0, 0];
+  if (n.startsWith("sr")) return [0, 1];
+  // Match the first number anywhere in the string (e.g., "Class 10")
+  const match = n.match(/(\d+)/);
+  if (match) return [1, parseInt(match[1], 10)];
+  return [2, n];
+}
+
+const filteredClasses = classes
+  .slice()
+  .sort((a, b) => {
+    const ka = classSortKey(a.name);
+    const kb = classSortKey(b.name);
+    if (ka[0] !== kb[0]) return ka[0] - kb[0];
+    if (ka[1] !== kb[1]) {
+      if (typeof ka[1] === "number" && typeof kb[1] === "number") return ka[1] - kb[1];
+      return String(ka[1]).localeCompare(String(kb[1]));
+    }
+    return 0;
+  })
+  .filter(cls => cls.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-white">

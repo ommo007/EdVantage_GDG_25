@@ -1,71 +1,90 @@
-"use client"
-
-import { useState, useRef, useEffect } from "react"
-import { useNavigate, useParams } from "react-router-dom"
-import { 
-  ChevronDown, 
-  User, 
-  LogOut, 
-  Calendar, 
-  MessageSquare, 
-  Edit, 
-  Menu, 
-  Settings, 
-  BookOpen, 
+import { useState, useRef, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import {
+  ChevronDown,
+  User,
+  LogOut,
+  Calendar,
+  MessageSquare,
+  Edit,
+  Menu,
+  Settings,
+  BookOpen,
   ArrowLeft,
   PanelRight,
   Database,
   FileText,
-  ListChecks
-} from "lucide-react"
+  ListChecks,
+  Mic
+} from "lucide-react";
 import { Link as LinkIcon } from "lucide-react";
-import ReactMarkdown from "react-markdown"
+import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import Whiteboard from "./Whiteboard"
-import Logo from "./Logo"
-import RagStudyAssistant from "./study/RagStudyAssistant"
+import Whiteboard from "./Whiteboard";
+import Logo from "./Logo";
+import RagStudyAssistant from "./study/RagStudyAssistant";
+
+// Static chapters for each subject
+const subjectChapters = {
+  mathematics: [
+    "Number Systems",
+    "Algebraic Expressions",
+    "Linear Equations",
+    "Geometry",
+    "Mensuration"
+  ],
+  science: [
+    "Matter in Our Surroundings",
+    "Cell Structure",
+    "Motion",
+    "Light",
+    "Electricity"
+  ],
+  history: [
+    "The French Revolution",
+    "Colonialism",
+    "Nationalism in India"
+  ],
+  civics: [
+    "Democracy",
+    "Constitution",
+    "Rights and Duties"
+  ],
+  economics: [
+    "The Story of Village Palampur",
+    "People as Resource"
+  ],
+  english: [
+    "Prose: The Fun They Had",
+    "Poem: The Road Not Taken"
+  ],
+  geography: [
+    "India: Size and Location",
+    "Physical Features of India"
+  ]
+};
 
 const StudentStudySpace = () => {
-  // -------------------- State --------------------
-  const [selectedDay, setSelectedDay] = useState(1)
-  const [isAssistantOpen, setIsAssistantOpen] = useState(true)
-  const [selectedTool, setSelectedTool] = useState('video')
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
-  const [isToolbarOpen, setIsToolbarOpen] = useState(true)
+  const { subjectId } = useParams(); // subjectName from URL
+  const [selectedChapter, setSelectedChapter] = useState("");
+  const [selectedTool, setSelectedTool] = useState('video');
+  const [isToolbarOpen, setIsToolbarOpen] = useState(true);
+  const [isAssistantOpen, setIsAssistantOpen] = useState(true);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [messages, setMessages] = useState([
     { id: 1, text: "Hello, I'm balmitra, an AI assistant. 👋 What are you up to today? 🤔", sender: "bot" },
-  ])
-  const [inputMessage, setInputMessage] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const [videoUrl, setVideoUrl] = useState("")
-  const [isWhiteboardOpen, setIsWhiteboardOpen] = useState(false)
-  const [useRagAssistant, setUseRagAssistant] = useState(false)
-  const [quizzes, setQuizzes] = useState([]) // For quizzes
-  const [materials, setMaterials] = useState([]) // For lecture materials
-  const [chapters, setChapters] = useState([
-  { id: 1, name: "Introduction" },
-  { id: 2, name: "Algebra Basics" },
-  { id: 3, name: "Geometry" },
-  { id: 4, name: "Trigonometry" },
-  { id: 5, name: "Calculus" }
-]);
+  ]);
+  const [inputMessage, setInputMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [videoUrl, setVideoUrl] = useState("");
+  const [useRagAssistant, setUseRagAssistant] = useState(false);
+  const [quizzes, setQuizzes] = useState([]);
+  const [materials, setMaterials] = useState([]);
+  const chatContainerRef = useRef(null);
+  const navigate = useNavigate();
 
-  // -------------------- Hooks --------------------
-  const navigate = useNavigate()
-  const { classId } = useParams()
-  const userRole = "student"
-  const chatContainerRef = useRef(null)
-
-  // -------------------- Handlers --------------------
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('userRole');
-    navigate('/');
-  };
-
-  const handleGoBack = () => {
-    navigate(`/${userRole}`);
-  };
+  // Get chapters for the selected subject
+   const chapters = subjectChapters[decodeURIComponent(subjectId)] || [];
 
   // Scroll chat to bottom on new message
   useEffect(() => {
@@ -74,27 +93,8 @@ const StudentStudySpace = () => {
     }
   }, [messages]);
 
-  // Fetch quizzes and materials when tool changes
-  useEffect(() => {
-    // Replace with your actual API endpoints
-    if (selectedTool === "quiz") {
-      // Example: fetch quizzes for the class
-      fetch(`/api/student/quizzes?classId=${classId}`)
-        .then(res => res.json())
-        .then(data => setQuizzes(data || []))
-        .catch(() => setQuizzes([]));
-    }
-    if (selectedTool === "materials") {
-      // Example: fetch materials for the class
-      fetch(`/api/student/materials?classId=${classId}`)
-        .then(res => res.json())
-        .then(data => setMaterials(data || []))
-        .catch(() => setMaterials([]));
-    }
-  }, [selectedTool, classId]);
-
   // Send message to AI assistant
- const handleSendMessage = async () => {
+  const handleSendMessage = async () => {
   if (!inputMessage.trim()) return;
 
   const newUserMessage = {
@@ -113,7 +113,7 @@ const StudentStudySpace = () => {
     const response = await fetch("https://edvantage-gdg-25.onrender.com/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: currentMessage, role: "student" }) // <<< ✅ add role
+      body: JSON.stringify({ message: currentMessage, role: "student" })
     });
 
     const raw = await response.text();
@@ -134,51 +134,124 @@ const StudentStudySpace = () => {
     setMessages(prev => [...prev, { id: messages.length + 2, text: "Sorry, the assistant is not responding.", sender: "bot" }]);
   } finally {
     setIsLoading(false);
-    }
+  }
+};
+
+  const handleVoiceInput = () => {
+  // Check for browser support
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    
+    return;
   }
 
-  // Send message on Enter (not Shift+Enter)
+  const recognition = new SpeechRecognition();
+  recognition.lang = "en-US";
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+
+  recognition.onstart = () => {
+    setIsLoading(true);
+  };
+
+  recognition.onresult = (event) => {
+    const transcript = event.results[0][0].transcript;
+    setInputMessage(transcript);
+    setIsLoading(false);
+  };
+
+  recognition.onerror = (event) => {
+    setIsLoading(false);
+    alert("Voice input error: " + event.error);
+  };
+
+  recognition.onend = () => {
+    setIsLoading(false);
+  };
+
+  recognition.start();
+};
+
   const handleKeyPress = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault()
-      handleSendMessage()
+      e.preventDefault();
+      handleSendMessage();
     }
-  }
+  };
 
-  // If a message contains a video link, open it in the player
   const handleVideoLinkClick = (message) => {
-    const urlMatch = message.text.match(/https?:\/\/[\w./?=&%-]+/)
+    const urlMatch = message.text.match(/https?:\/\/[\w./?=&%-]+/);
     if (urlMatch) {
-      setVideoUrl(urlMatch[0])
-      setSelectedTool('video')
+      setVideoUrl(urlMatch[0]);
+      setSelectedTool('video');
     }
-  }
+  };
 
-  // Toggle whiteboard tool
   const toggleWhiteboard = () => {
-    setIsWhiteboardOpen(!isWhiteboardOpen)
-    setSelectedTool('whiteboard')
-  }
+    setSelectedTool('whiteboard');
+  };
 
-  // Toggle RAG AI assistant
   const toggleRagAssistant = () => {
-    setUseRagAssistant(!useRagAssistant)
-  }
+    setUseRagAssistant(!useRagAssistant);
+  };
 
-  // -------------------- Render --------------------
+  const fetchAIForChapter = async (subjectId, chapter) => {
+  setIsLoading(true);
+  try {
+    const response = await fetch("https://edvantage-gdg-25.onrender.com/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        role: "student",
+        subject: subjectId,
+        chapter: chapter
+      })
+    });
+    const raw = await response.text();
+    const data = JSON.parse(raw);
+
+    // Extract video URL from the response text (if present)
+    const urlMatch = data.response.match(/https?:\/\/[\w./?=&%-]+/);
+    if (urlMatch) {
+      setVideoUrl(urlMatch[0]);
+      setSelectedTool('video'); // Optionally switch to video tab
+    } else {
+      setVideoUrl(""); // No video found
+    }
+
+    const botMessage = {
+      id: messages.length + 1,
+      text: data.response || "⚠️ No response received.",
+      sender: "bot"
+    };
+    setMessages(prev => [...prev, botMessage]);
+  } catch (err) {
+    setMessages(prev => [...prev, { id: messages.length + 1, text: "Sorry, the assistant is not responding.", sender: "bot" }]);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+  // When a chapter is clicked, set it as selected and (optionally) fetch videos/materials for it
+ const handleChapterClick = (chapter) => {
+  setSelectedChapter(chapter);
+  fetchAIForChapter(subjectId, chapter);
+};
+
+  console.log("subjectId:", subjectId);
+console.log("chapters:", chapters);
+
   return (
     <div className="h-screen max-h-screen overflow-hidden flex flex-col bg-gradient-to-br from-indigo-50 to-white">
-      {/* -------------------- Header -------------------- */}
+      {/* Header */}
       <header className="flex-shrink-0 bg-white shadow-sm border-b border-indigo-100 h-14">
         <nav className="container mx-auto px-4 h-full flex justify-between items-center">
-          {/* Logo */}
           <div className="flex items-center gap-3">
             <Logo />
           </div>
-          {/* User Menu & Back Button */}
           <div className="flex items-center space-x-4">
             <button
-              onClick={handleGoBack}
+              onClick={() => navigate("/student")}
               className="px-4 py-2 text-indigo-600 rounded-md hover:bg-indigo-50 flex items-center"
             >
               <ArrowLeft className="mr-2 h-5 w-5" />
@@ -206,7 +279,11 @@ const StudentStudySpace = () => {
                     Settings
                   </button>
                   <button 
-                    onClick={handleLogout}
+                    onClick={() => {
+                      localStorage.removeItem('token');
+                      localStorage.removeItem('userRole');
+                      navigate('/');
+                    }}
                     className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 focus:outline-none focus:bg-red-100"
                   >
                     <LogOut className="inline-block w-4 h-4 mr-2" />
@@ -219,76 +296,46 @@ const StudentStudySpace = () => {
         </nav>
       </header>
 
-      {/* -------------------- Toolbar (Tools) -------------------- */}
+      {/* Toolbar */}
       <div className="flex-shrink-0 bg-indigo-50 border-b border-indigo-100 py-1 px-4">
         <div className="flex items-center space-x-2">
-          {/* Sidebar Toggle */}
           <button
             onClick={() => setIsToolbarOpen(!isToolbarOpen)}
             className="p-1.5 hover:bg-indigo-100 rounded-md transition duration-300"
-           
           >
             <Menu className="h-5 w-5 text-indigo-600" />
           </button>
-
-          {/* Lecture Tool */}
           <button
             onClick={() => setSelectedTool("video")}
-            className={`p-2 rounded-md ${
-              selectedTool === "video"
-                ? "bg-indigo-200"
-                : "hover:bg-indigo-100"
-            }`}
+            className={`p-2 rounded-md ${selectedTool === "video" ? "bg-indigo-200" : "hover:bg-indigo-100"}`}
             title="Lecture Space"
           >
             <BookOpen className="h-5 w-5 text-indigo-600" />
           </button>
-
-          {/* Whiteboard Tool */}
           <button
             onClick={toggleWhiteboard}
-            className={`p-2 rounded-md ${
-              selectedTool === "whiteboard"
-                ? "bg-indigo-200"
-                : "hover:bg-indigo-100"
-            }`}
+            className={`p-2 rounded-md ${selectedTool === "whiteboard" ? "bg-indigo-200" : "hover:bg-indigo-100"}`}
             title="Study Notes"
           >
             <Edit className="h-5 w-5 text-indigo-600" />
           </button>
-
-          {/* Quiz Tool */}
           <button
             onClick={() => setSelectedTool("quiz")}
-            className={`p-2 rounded-md ${
-              selectedTool === "quiz"
-                ? "bg-indigo-200"
-                : "hover:bg-indigo-100"
-            }`}
+            className={`p-2 rounded-md ${selectedTool === "quiz" ? "bg-indigo-200" : "hover:bg-indigo-100"}`}
             title="Quiz"
           >
             <ListChecks className="h-5 w-5 text-indigo-600" />
           </button>
-
-          {/* Lecture Materials Tool */}
           <button
             onClick={() => setSelectedTool("materials")}
-            className={`p-2 rounded-md ${
-              selectedTool === "materials"
-                ? "bg-indigo-200"
-                : "hover:bg-indigo-100"
-            }`}
+            className={`p-2 rounded-md ${selectedTool === "materials" ? "bg-indigo-200" : "hover:bg-indigo-100"}`}
             title="Lecture Materials"
           >
             <FileText className="h-5 w-5 text-indigo-600" />
           </button>
-
-          {/* AI Assistant Tool */}
           <button
             onClick={toggleRagAssistant}
-            className={`p-2 rounded-md ${
-              useRagAssistant ? "bg-teal-200" : "hover:bg-indigo-100"
-            }`}
+            className={`p-2 rounded-md ${useRagAssistant ? "bg-teal-200" : "hover:bg-indigo-100"}`}
             title="AI Study Assistant"
           >
             <Database className="h-5 w-5 text-teal-600" />
@@ -296,39 +343,41 @@ const StudentStudySpace = () => {
         </div>
       </div>
 
-      {/* -------------------- Divider -------------------- */}
+      {/* Divider */}
       <div className="border-t border-indigo-100" />
 
-      {/* -------------------- Main Content Layout -------------------- */}
+      {/* Main Content Layout */}
       <div className="flex flex-1 overflow-hidden relative">
-        {/* ----------- Sidebar: Study Plan ----------- */}
+        {/* Sidebar: Chapters */}
         {isToolbarOpen && (
-  <aside className="w-64 bg-white border-r border-indigo-100 flex flex-col overflow-hidden">
-    <div className="p-3 border-b border-indigo-100 flex-shrink-0">
-      <h3 className="font-medium text-indigo-800">Chapters</h3>
-    </div>
-    <div className="p-2 flex-1 overflow-y-auto">
-      <div className="space-y-1">
-        {chapters.map((chapter) => (
-          <button
-            key={chapter.id}
-            onClick={() => setSelectedDay(chapter.id)}
-            className={`w-full flex items-center px-3 py-2 rounded-md transition duration-300 ${
-              selectedDay === chapter.id
-                ? 'bg-indigo-100 text-indigo-800'
-                : 'text-indigo-600 hover:bg-indigo-50'
-            }`}
-          >
-            <Calendar className="w-4 h-4 min-w-[16px]" />
-            <span className="ml-2">{chapter.name}</span>
-          </button>
-        ))}
-      </div>
-    </div>
-  </aside>
-)}
+          <aside className="w-64 bg-white border-r border-indigo-100 flex flex-col overflow-hidden">
+            <div className="p-3 border-b border-indigo-100 flex-shrink-0">
+              <h3 className="font-medium text-indigo-800">Chapters</h3>
+            </div>
+            <div className="p-2 flex-1 overflow-y-auto">
+              <div className="space-y-1">
+                {chapters.map((chapter, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => handleChapterClick(chapter)}
+                    className={`w-full flex items-center px-3 py-2 rounded-md transition duration-300 ${
+                      selectedChapter === chapter
+                        ? 'bg-indigo-100 text-indigo-800 font-bold'
+                        : 'text-indigo-600 hover:bg-indigo-50'
+                    }`}
+                  >
+                    <span className="w-6 h-6 flex items-center justify-center bg-indigo-100 text-indigo-700 font-bold rounded mr-2">
+      {idx + 1}
+    </span>
+    <span>{chapter}</span>
+  </button>
+                ))}
+              </div>
+            </div>
+          </aside>
+        )}
 
-        {/* ----------- Main Content: Workspace ----------- */}
+        {/* Main Content: Workspace */}
         <div
           className={`flex-1 flex flex-col overflow-hidden relative
             ${isToolbarOpen ? "border-l border-indigo-100" : ""}
@@ -359,36 +408,25 @@ const StudentStudySpace = () => {
           <div className="flex-1 p-4 overflow-auto">
             {selectedTool === 'video' && (
               <div className="w-full flex justify-center items-center">
-                {videoUrl ? (
-                  <div
-                    className={
-                      `w-full aspect-[16/9] ` +
-                      (!isToolbarOpen && !isAssistantOpen
-                        ? "max-w-4xl"
-                        : "max-w-4xl")
-                    }
-                  >
+                {selectedChapter && videoUrl ? (
+                  <div className="w-full aspect-[16/9] max-w-4xl">
                     <iframe
-                      key={videoUrl} 
+                      key={videoUrl}
                       className="w-full h-full rounded-lg"
-                      src={
-                        videoUrl.replace("watch?v=", "embed/") +
-                        "?rel=0&modestbranding=1&showinfo=0"
-                      }
+                      src={videoUrl}
                       title="YouTube video player"
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen
                     ></iframe>
                   </div>
                 ) : (
-                  <p className="text-indigo-600">Select a lecture to begin</p>
+                  <p className="text-indigo-600">Select a chapter to begin</p>
                 )}
               </div>
             )}
             {selectedTool === 'whiteboard' && <Whiteboard />}
             {selectedTool === 'quiz' && (
               <div>
-                
                 {quizzes.length === 0 ? (
                   <p className="text-indigo-600 text-center ">No quizzes available yet.</p>
                 ) : (
@@ -412,7 +450,6 @@ const StudentStudySpace = () => {
             )}
             {selectedTool === 'materials' && (
               <div>
-               
                 {materials.length === 0 ? (
                   <p className="text-indigo-600 text-center">No lecture materials uploaded yet.</p>
                 ) : (
@@ -437,7 +474,7 @@ const StudentStudySpace = () => {
           </div>
         </div>
 
-        {/* ----------- Right Panel: Study Assistant ----------- */}
+        {/* Right Panel: Study Assistant */}
         {isAssistantOpen && (
           <div className="w-80 border-l border-indigo-100 bg-white flex flex-col overflow-hidden">
             {useRagAssistant ? (
@@ -522,6 +559,15 @@ const StudentStudySpace = () => {
                       rows="1"
                       className="flex-1 px-3 py-2 border border-indigo-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none bg-indigo-50/30 placeholder-indigo-400 text-sm"
                     />
+                     {/* Voice Assistant Button */}
+  <button
+    onClick={handleVoiceInput} // You will define this function
+    className="p-2 bg-indigo-100 text-indigo-600 rounded-lg hover:bg-indigo-200 transition duration-300"
+    title="Voice Assistant"
+    type="button"
+  >
+    <Mic className="w-5 h-5" />
+  </button>
                     <button
                       onClick={handleSendMessage}
                       disabled={isLoading}
@@ -537,7 +583,7 @@ const StudentStudySpace = () => {
         )}
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default StudentStudySpace
+export default StudentStudySpace;
