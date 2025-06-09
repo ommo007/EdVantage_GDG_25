@@ -1,11 +1,9 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useState } from 'react';
 import {
   Users,
   BookOpen,
   FileText,
   Video,
-  Link as LinkIcon,
   ExternalLink,
   Calendar,
   Bell,
@@ -13,65 +11,74 @@ import {
   AlertCircle,
   User,
   PieChart,
-  ArrowRight
+  ArrowRight,
+  Play,
+  Trophy,
+  Target
 } from 'lucide-react';
 
 import DashboardHeader from "./shared/DashboardHeader";
-import { supabase } from "../lib/supabaseClient";
-import { getStudentClassDetails } from "../services/student_service";
-import { getAnnouncements } from "../services/announcement_service";
+import { useNavigate } from "react-router-dom";
+
+// Demo data for class details
+const demoClassData = {
+  name: "Class 9",
+  section: "A",
+  teachers: ["Ashima Gupta"],
+  performance: {
+    totalQuizzes: 8,
+    quizzesAttempted: 7,
+    totalAssignments: 10,
+    assignmentsSubmitted: 9,
+    overallProgress: 78
+  }
+};
+
+const demoAnnouncements = [
+  {
+    announcement_id: 1,
+    title: "Welcome to Class 9!",
+    content: "First day of class is June 10th. Please bring your notebooks and be ready for an exciting journey!",
+    publish_date: "2024-06-01"
+  },
+  {
+    announcement_id: 2,
+    title: "Math Quiz Next Week",
+    content: "Quiz on Algebra chapters 1-3 scheduled for next Friday.",
+    publish_date: "2024-06-05"
+  }
+];
+
+// Static subject list with icons
+const subjectList = [
+  { id: "mathematics", name: "Mathematics", icon: "📐", color: "from-blue-500 to-blue-600" },
+  { id: "science", name: "Science", icon: "🧪", color: "from-green-500 to-green-600" },
+  { id: "history", name: "History", icon: "🏛️", color: "from-amber-500 to-amber-600" },
+  { id: "civics", name: "Civics", icon: "⚖️", color: "from-purple-500 to-purple-600" },
+  { id: "economics", name: "Economics", icon: "📊", color: "from-teal-500 to-teal-600" },
+  { id: "english", name: "English", icon: "📚", color: "from-rose-500 to-rose-600" },
+  { id: "geography", name: "Geography", icon: "🌍", color: "from-emerald-500 to-emerald-600" }
+];
 
 const StudentClassInterface = () => {
-  const [classData, setClassData] = useState(null);
-  const [announcements, setAnnouncements] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [classData] = useState(demoClassData);
+  const [announcements] = useState(demoAnnouncements);
+  const [isLoading] = useState(false);
+  const [error] = useState(null);
   const [selectedSubject, setSelectedSubject] = useState("");
 
   const navigate = useNavigate();
 
-  useEffect(() => {
-  const fetchData = async () => {
-    try {
-      setIsLoading(true);
-
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      console.log("StudentClassInterface: user =", user);
-      if (userError || !user) throw new Error("User not logged in");
-
-      const classDetails = await getStudentClassDetails(user.id);
-      console.log("StudentClassInterface: classDetails =", classDetails);
-      setClassData(classDetails);
-
-      const classAnnouncements = await getAnnouncements(classDetails.id);
-      setAnnouncements(classAnnouncements);
-
-    } catch (err) {
-      console.error("Failed to load student class info:", err);
-      setError("Failed to load class information. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  fetchData();
-}, []);
-
-  const handleSubjectChange = (e) => {
-    const subjectId = e.target.value;
+  const handleSubjectChange = (subjectId) => {
     setSelectedSubject(subjectId);
-    // if (subjectId) {
-    //   navigate(`/student/study-space/${subjectId}`);
-    // }
   };
 
   const handleEnterStudySpace = () => {
-    if (selectedSubject) {
-      navigate(`/student/study-space/${selectedSubject}`);
-    } else {
-      alert("Please select a subject.");
-    }
-  };
+  if (selectedSubject) {
+    navigate(`/student/study-space/${selectedSubject}`);
+    console.log(`Navigating to study space for ${selectedSubject}`);
+  }
+};
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -84,7 +91,7 @@ const StudentClassInterface = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex justify-center items-center bg-gradient-to-br from-indigo-50 to-white">
+      <div className="min-h-screen flex justify-center items-center bg-gradient-to-br from-indigo-50 via-white to-purple-50">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
       </div>
     );
@@ -92,7 +99,7 @@ const StudentClassInterface = () => {
 
   if (error || !classData) {
     return (
-      <div className="min-h-screen p-8 bg-gradient-to-br from-indigo-50 to-white">
+      <div className="min-h-screen p-8 bg-gradient-to-br from-indigo-50 via-white to-purple-50">
         <div className="bg-red-50 text-red-600 p-6 rounded-lg max-w-md mx-auto">
           <AlertCircle className="h-8 w-8 mb-4" />
           <h2 className="text-xl font-bold mb-2">Error</h2>
@@ -103,117 +110,183 @@ const StudentClassInterface = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-white">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
       <DashboardHeader userRole="student" />
 
-      <main className="container mx-auto px-4 py-6">
-        <div className="mb-6">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-              <div className="flex items-center mb-2">
-  <h1 className="text-3xl font-bold text-indigo-900">
-    {classData.name} <span className="text-purple-600">Section {classData.section}</span>
-  </h1>
-</div>
-
-              <div className="flex items-center gap-4 mt-2 text-indigo-700">
-                <User className="h-5 w-5 mr-2" />
-  <span className="font-medium">
-    {classData.teachers && classData.teachers.length > 0
-      ? classData.teachers.join(", ")
-      : "No teacher assigned"}
-  </span>
-
-                <div className="relative group">
-                  <select
-                    value={selectedSubject}
-                    onChange={handleSubjectChange}
-                    className="w-full appearance-none px-4 pr-10 py-3 bg-gradient-to-r from-white to-indigo-50 border-2 border-indigo-200 rounded-lg text-indigo-700 font-medium shadow-sm hover:shadow-md hover:border-indigo-300 focus:outline-none focus:ring-3 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all duration-300 ease-in-out cursor-pointer"
-                  >
-                    <option value="">📚 Select Subject</option>
-                    {classData.subjects.map((subject, index) => (
-                      <option key={index} value={subject.id}>{subject.name}</option>
-                    ))}
-                  </select>
-                  <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
-    <svg
-      className="w-5 h-5 text-indigo-500 group-hover:text-indigo-600 transition-all duration-300 group-focus-within:rotate-180"
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-    </svg>
-    </div>
+      <main className="container mx-auto px-4 py-8 max-w-7xl">
+        {/* Header Section */}
+        <div className="mb-8">
+          <div className="bg-white rounded-2xl shadow-lg border border-indigo-100 p-8">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+              <div className="flex-1">
+                <div className="flex items-center mb-4">
+                  <div className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white w-12 h-12 rounded-xl flex items-center justify-center mr-4">
+                    <BookOpen className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h1 className="text-3xl font-bold text-gray-800">
+                      {classData.name} <span className="text-purple-600">Section {classData.section}</span>
+                    </h1>
+                    <div className="flex items-center gap-2 mt-2 text-gray-600">
+                      <User className="h-4 w-4" />
+                      <span className="text-sm">
+                        {classData.teachers && classData.teachers.length > 0
+                          ? classData.teachers.join(", ")
+                          : "No teacher assigned"}
+                      </span>
+                    </div>
+                  </div>
                 </div>
+                
+                {selectedSubject && (
+  <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3 inline-block">
+    <p className="text-sm text-indigo-700">
+      <span className="font-medium">Selected Subject:</span>{" "}
+      {subjectList.find((s) => s.id === selectedSubject)?.name || selectedSubject}
+    </p>
+  </div>
+)}
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={handleEnterStudySpace}
+                  disabled={!selectedSubject}
+                  className={`group relative px-8 py-4 rounded-xl font-semibold text-white transition-all duration-300 transform ${
+                    !selectedSubject 
+                      ? "bg-gray-400 cursor-not-allowed" 
+                      : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 hover:scale-105 hover:shadow-xl active:scale-95"
+                  }`}
+                >
+                  <div className="flex items-center justify-center">
+                    <Play className="mr-2 h-5 w-5" />
+                    Enter Classroom
+                    <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                  </div>
+                  {selectedSubject && (
+                    <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 rounded-xl transition-opacity"></div>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Subjects Section */}
+        <div className="mb-8">
+          <div className="bg-white rounded-2xl shadow-lg border border-indigo-100 p-8">
+            <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+              <BookOpen className="h-6 w-6 mr-3 text-indigo-600" />
+              Choose Your Subject
+            </h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4">
+              {subjectList.map((subject) => (
+                <button
+    key={subject.id}
+    onClick={() => handleSubjectChange(subject.id)}
+    className={`group relative p-6 rounded-xl transition-all duration-300 transform hover:scale-105 ${
+      selectedSubject === subject.id
+        ? "bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-xl scale-105"
+        : "bg-white hover:bg-gray-50 text-gray-700 shadow-md hover:shadow-lg border border-gray-200"
+    }`}
+  >
+    <div className="text-center">
+      <div className="text-3xl mb-3">{subject.icon}</div>
+      <h3 className="font-semibold text-sm leading-tight">{subject.name}</h3>
+    </div>
+    {selectedSubject === subject.id && (
+      <div className="absolute top-2 right-2">
+        <div className="w-3 h-3 bg-white rounded-full"></div>
+      </div>
+    )}
+  </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Performance and Announcements Row */}
+        <div className="grid lg:grid-cols-2 gap-8">
+          {/* Performance Section */}
+          <div className="bg-white rounded-2xl shadow-lg border border-indigo-100 p-8">
+            <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+              <Trophy className="h-6 w-6 mr-3 text-indigo-600" />
+              Your Performance
+            </h2>
+
+            {/* Overall Progress */}
+            <div className="mb-8">
+              <div className="flex justify-between items-center mb-3">
+                <span className="text-gray-600 font-medium">Overall Progress</span>
+                <span className="text-2xl font-bold text-indigo-600">{classData.performance.overallProgress}%</span>
+              </div>
+              <div className="bg-gray-200 rounded-full h-4 overflow-hidden">
+                <div
+                  className="bg-gradient-to-r from-indigo-500 to-purple-600 h-4 rounded-full transition-all duration-1000 ease-out"
+                  style={{ width: `${classData.performance.overallProgress}%` }}
+                />
               </div>
             </div>
 
-            <button
-              onClick={handleEnterStudySpace}
-              className={`bg-indigo-600 text-white px-6 py-3 rounded-md transition duration-300 font-medium flex items-center ${
-                !selectedSubject ? "opacity-50 cursor-not-allowed" : "hover:bg-indigo-700"
-              }`}
-              disabled={!selectedSubject}
-            >
-              Enter Classroom
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </button>
-          </div>
-        </div>
-
-        {/* Performance */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-indigo-100 mb-8">
-          <h2 className="text-xl font-bold text-indigo-900 mb-4 flex items-center">
-            <PieChart className="h-5 w-5 mr-2 text-indigo-600" />
-            Your Performance
-          </h2>
-
-          <div className="mb-6">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-indigo-600">Overall Progress</span>
-              <span className="text-sm font-medium">{classData.performance.overallProgress}%</span>
-            </div>
-            <div className="bg-indigo-100 rounded h-2.5 mt-1">
-              <div
-                className="bg-indigo-600 h-2.5 rounded"
-                style={{ width: `${classData.performance.overallProgress}%` }}
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <div className="bg-indigo-50 p-4 rounded-md">
-              <h3 className="text-sm text-indigo-600 mb-1">Quizzes</h3>
-              <p className="text-xl font-bold">{classData.performance.quizzesAttempted}/{classData.performance.totalQuizzes}</p>
-            </div>
-            <div className="bg-indigo-50 p-4 rounded-md">
-              <h3 className="text-sm text-indigo-600 mb-1">Assignments</h3>
-              <p className="text-xl font-bold">{classData.performance.assignmentsSubmitted}/{classData.performance.totalAssignments}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Announcements */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-indigo-100">
-          <h2 className="text-xl font-bold text-indigo-900 mb-4 flex items-center">
-            <Bell className="h-5 w-5 mr-2 text-indigo-600" />
-            Announcements
-          </h2>
-
-          {announcements.length ? (
-            <div className="space-y-4">
-              {announcements.map((a) => (
-                <div key={a.announcement_id} className="border-b py-3">
-                  <h3 className="text-indigo-900 font-medium">{a.title}</h3>
-                  <span className="text-xs text-indigo-400 block mb-1">{formatDate(a.publish_date)}</span>
-                  <p className="text-indigo-700">{a.content}</p>
+            {/* Stats Grid */}
+            <div className="grid grid-cols-2 gap-6">
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-xl border border-blue-100">
+                <div className="flex items-center justify-between mb-2">
+                  <Target className="h-6 w-6 text-blue-600" />
+                  <span className="text-2xl font-bold text-blue-600">
+                    {classData.performance.quizzesAttempted}/{classData.performance.totalQuizzes}
+                  </span>
                 </div>
-              ))}
+                <h3 className="text-blue-800 font-semibold">Quizzes Completed</h3>
+                <p className="text-blue-600 text-sm mt-1">
+                  {Math.round((classData.performance.quizzesAttempted / classData.performance.totalQuizzes) * 100)}% completion rate
+                </p>
+              </div>
+              
+              <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-xl border border-green-100">
+                <div className="flex items-center justify-between mb-2">
+                  <FileText className="h-6 w-6 text-green-600" />
+                  <span className="text-2xl font-bold text-green-600">
+                    {classData.performance.assignmentsSubmitted}/{classData.performance.totalAssignments}
+                  </span>
+                </div>
+                <h3 className="text-green-800 font-semibold">Assignments Done</h3>
+                <p className="text-green-600 text-sm mt-1">
+                  {Math.round((classData.performance.assignmentsSubmitted / classData.performance.totalAssignments) * 100)}% completion rate
+                </p>
+              </div>
             </div>
-          ) : (
-            <p className="text-indigo-500">No announcements yet.</p>
-          )}
+          </div>
+
+          {/* Announcements Section */}
+          <div className="bg-white rounded-2xl shadow-lg border border-indigo-100 p-8">
+            <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+              <Bell className="h-6 w-6 mr-3 text-indigo-600" />
+              Latest Announcements
+            </h2>
+
+            {announcements.length ? (
+              <div className="space-y-4">
+                {announcements.map((announcement) => (
+                  <div key={announcement.announcement_id} className="bg-gradient-to-r from-gray-50 to-indigo-50 p-6 rounded-xl border border-gray-200 hover:shadow-md transition-shadow">
+                    <div className="flex items-start justify-between mb-3">
+                      <h3 className="text-gray-800 font-semibold text-lg">{announcement.title}</h3>
+                      <span className="text-xs text-indigo-500 bg-indigo-100 px-3 py-1 rounded-full">
+                        {formatDate(announcement.publish_date)}
+                      </span>
+                    </div>
+                    <p className="text-gray-600 leading-relaxed">{announcement.content}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <Bell className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500 text-lg">No announcements yet</p>
+                <p className="text-gray-400 text-sm">Check back later for updates</p>
+              </div>
+            )}
+          </div>
         </div>
       </main>
     </div>
