@@ -17,13 +17,11 @@ import {
 import DashboardHeader from './shared/DashboardHeader';
 import StatCard from './shared/StatCard';
 import DashboardInitializer from './shared/DashboardInitializer';
-import AuthDebug from './AuthDebug';
 
 import { getClassDetails } from '../services/classroom_service';
 import { getSubjectsForClass } from '../services/material_service';
 import { getAnnouncements, createAnnouncement } from '../services/announcement_service';
 import { getStudentsByClassId } from '../services/student_service';
-import { supabase } from '../lib/supabaseClient';
 
 const AssignedClass = () => {
   const { classId } = useParams();
@@ -47,12 +45,8 @@ const AssignedClass = () => {
     try {
       setIsLoading(true);
 
-      // Get authenticated user ID directly from Supabase
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      
-      if (userError || !user) {
-        throw new Error("User not authenticated");
-      }
+      // For demo purposes, no authentication required
+      console.log('🔍 Loading classroom data for demo...');
 
       const classDetails = await getClassDetails(classId); // Supabase → classes
       const subjects = await getSubjectsForClass(classId); // Supabase → class_subjects + subjects
@@ -142,9 +136,6 @@ const AssignedClass = () => {
   return (
     <DashboardInitializer expectedRole="teacher">
       <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-white">
-        {/* Temporary Debug Component */}
-        <AuthDebug />
-        
         {/* Header */}
         <DashboardHeader userRole="teacher" />
 
