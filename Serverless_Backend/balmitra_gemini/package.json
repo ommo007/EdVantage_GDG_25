@@ -1,0 +1,29 @@
+{
+  "name": "balmitra-ai-worker",
+  "version": "1.0.0",
+  "description": "balmitra AI Assistant - Cloudflare Worker",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev",
+    "start": "wrangler dev"
+  },
+  "dependencies": {
+    "@google/genai": "^0.21.0",
+    "@tavily/core": "^1.7.1"
+  },
+  "devDependencies": {
+    "wrangler": "^3.78.12"
+  },
+  "keywords": [
+    "ai",
+    "assistant",
+    "cloudflare-workers",
+    "gemini",
+    "education",
+    "student-helper"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}

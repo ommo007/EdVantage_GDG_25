@@ -1,0 +1,20 @@
+{
+	"name": "mistral-ocr",
+	"version": "0.0.0",
+	"private": true,
+	"scripts": {
+		"deploy": "wrangler deploy",
+		"dev": "wrangler dev",
+		"start": "wrangler dev",
+		"test": "vitest"
+	},
+	"devDependencies": {
+		"@cloudflare/vitest-pool-workers": "^0.8.19",
+		"vitest": "~3.0.7",
+		"wrangler": "^4.16.1"
+	},
+	"dependencies": {
+		"@mistralai/mistralai": "^1.7.0",
+		"node-appwrite": "^17.0.0"
+	}
+}
