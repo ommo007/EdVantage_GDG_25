@@ -41,16 +41,8 @@ try {
   
   storage = new Storage(appwriteClient);
   console.log("✅ Appwrite client initialized successfully");
-  console.log("🔧 Using endpoint:", APPWRITE_ENDPOINT);
-  console.log("🔧 Using project:", APPWRITE_PROJECT_ID);
 } catch (error) {
   console.error("❌ Failed to initialize Appwrite client:", error);
-  console.error("🔧 CORS Setup Instructions:");
-  console.error("1. Go to Appwrite Console > Settings > General");
-  console.error("2. Add your domain to 'Platforms' section");
-  console.error("3. For development: add 'localhost:3000' or 'localhost:5173'");
-  console.error("4. For production: add your actual domain");
-  console.error("5. Ensure storage bucket has public read permissions");
   appwriteClient = null;
   storage = null;
 }
@@ -178,93 +170,51 @@ const StudentStudySpace = () => {
         bucketId: APPWRITE_BUCKET_ID
       });
       
-      // Add timeout and retry logic for CORS issues
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+      // Get list of files from the bucket
+      const appwriteFiles = await storage.listFiles(APPWRITE_BUCKET_ID);
+      console.log(`📁 Found ${appwriteFiles.total} total files in Appwrite bucket.`);
+      console.log("📋 All files:", appwriteFiles.files.map(f => f.name));
       
-      try {
-        // Get list of files from the bucket with proper headers
-        const appwriteFiles = await storage.listFiles(APPWRITE_BUCKET_ID, [], 100, 0);
-        clearTimeout(timeoutId);
-        
-        console.log(`📁 Found ${appwriteFiles.total} total files in Appwrite bucket.`);
-        console.log("📋 All files:", appwriteFiles.files.map(f => f.name));
-        
-        if (appwriteFiles.files.length === 0) {
-          console.log('⚠️ No files found in the Appwrite bucket.');
-          return [];
-        }
-        
-        // Filter files that start with "c9"
-        const class9Files = appwriteFiles.files.filter(file => {
-          const isClass9 = file.name.toLowerCase().startsWith('c9');
-          console.log(`🔍 File: ${file.name} - Is Class 9: ${isClass9}`);
-          return isClass9;
-        });
-        
-        console.log(`✅ Found ${class9Files.length} class 9 files:`, class9Files.map(f => f.name));
-        
-        // Transform files to include view and download URLs
-        const filesWithUrls = class9Files.map(file => {
-          const fileData = {
-            id: file.$id,
-            name: file.name,
-            size: file.sizeOriginal,
-            mimeType: file.mimeType,
-            createdAt: file.$createdAt,
-            viewUrl: `${APPWRITE_ENDPOINT}/storage/buckets/${APPWRITE_BUCKET_ID}/files/${file.$id}/view?project=${APPWRITE_PROJECT_ID}`,
-            downloadUrl: `${APPWRITE_ENDPOINT}/storage/buckets/${APPWRITE_BUCKET_ID}/files/${file.$id}/download?project=${APPWRITE_PROJECT_ID}`
-          };
-          console.log(`🔗 Generated URLs for ${file.name}:`, {
-            view: fileData.viewUrl,
-            download: fileData.downloadUrl
-          });
-          return fileData;
-        });
-        
-        return filesWithUrls;
-        
-      } catch (networkError) {
-        clearTimeout(timeoutId);
-        console.error('🌐 Network/CORS Error:', networkError);
-        
-        // Handle specific CORS errors
-        if (networkError.message?.includes('CORS') || 
-            networkError.message?.includes('cross-origin') ||
-            networkError.name === 'TypeError' ||
-            networkError.code === 'NETWORK_ERROR') {
-          throw new Error(`CORS Error: Unable to access Appwrite storage. Please check:
-          1. Domain is added to Appwrite project settings
-          2. CORS permissions are configured
-          3. Project ID and Bucket ID are correct
-          
-          Technical details: ${networkError.message}`);
-        }
-        
-        // Handle other network errors
-        throw new Error(`Network Error: ${networkError.message || 'Failed to connect to Appwrite'}`);
+      if (appwriteFiles.files.length === 0) {
+        console.log('⚠️ No files found in the Appwrite bucket.');
+        return [];
       }
       
+      // Filter files that start with "c9"
+      const class9Files = appwriteFiles.files.filter(file => {
+        const isClass9 = file.name.toLowerCase().startsWith('c9');
+        console.log(`🔍 File: ${file.name} - Is Class 9: ${isClass9}`);
+        return isClass9;
+      });
+      
+      console.log(`✅ Found ${class9Files.length} class 9 files:`, class9Files.map(f => f.name));
+      
+      // Transform files to include view and download URLs
+      const filesWithUrls = class9Files.map(file => {
+        const fileData = {
+          id: file.$id,
+          name: file.name,
+          size: file.sizeOriginal,
+          mimeType: file.mimeType,
+          createdAt: file.$createdAt,
+          viewUrl: `${APPWRITE_ENDPOINT}/storage/buckets/${APPWRITE_BUCKET_ID}/files/${file.$id}/view?project=${APPWRITE_PROJECT_ID}`,
+          downloadUrl: `${APPWRITE_ENDPOINT}/storage/buckets/${APPWRITE_BUCKET_ID}/files/${file.$id}/download?project=${APPWRITE_PROJECT_ID}`
+        };
+        console.log(`🔗 Generated URLs for ${file.name}:`, {
+          view: fileData.viewUrl,
+          download: fileData.downloadUrl
+        });
+        return fileData;
+      });
+      
+      return filesWithUrls;
     } catch (error) {
       console.error('❌ Error fetching files from Appwrite:', error);
       console.error('📝 Error details:', {
         message: error.message,
         code: error.code,
-        type: error.type,
-        name: error.name
+        type: error.type
       });
-      
-      // Provide user-friendly error messages
-      if (error.message?.includes('CORS')) {
-        throw new Error('CORS Error: Cannot access file storage. Please contact administrator.');
-      } else if (error.message?.includes('Network')) {
-        throw new Error('Network Error: Unable to connect to file storage.');
-      } else if (error.message?.includes('project')) {
-        throw new Error('Configuration Error: Invalid project settings.');
-      } else if (error.message?.includes('bucket')) {
-        throw new Error('Storage Error: Invalid bucket configuration.');
-      }
-      
       throw error; // Re-throw to be caught by the calling function
     }
   };
@@ -1093,55 +1043,15 @@ console.log("chapters:", chapters);
                   <div className="text-center py-8">
                     <div className="text-red-500 mb-4">
                       <FileText className="mx-auto h-16 w-16 mb-2" />
-                      <p className="font-semibold text-lg mb-2">Failed to Load Materials</p>
-                      <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-left">
-                        <p className="text-sm text-red-800 mb-2">
-                          <strong>Error:</strong> {materialsError}
-                        </p>
-                        {materialsError.includes('CORS') && (
-                          <div className="mt-3 text-xs text-red-700">
-                            <p className="font-semibold mb-1">CORS Configuration Required:</p>
-                            <ul className="list-disc list-inside space-y-1">
-                              <li>Add your domain to Appwrite Console</li>
-                              <li>Go to Settings → General → Platforms</li>
-                              <li>Add localhost:3000 for development</li>
-                              <li>Ensure bucket has public read permissions</li>
-                            </ul>
-                          </div>
-                        )}
-                        {materialsError.includes('Network') && (
-                          <div className="mt-3 text-xs text-red-700">
-                            <p className="font-semibold mb-1">Network Troubleshooting:</p>
-                            <ul className="list-disc list-inside space-y-1">
-                              <li>Check your internet connection</li>
-                              <li>Verify Appwrite service status</li>
-                              <li>Try refreshing the page</li>
-                            </ul>
-                          </div>
-                        )}
-                        {materialsError.includes('Configuration') && (
-                          <div className="mt-3 text-xs text-red-700">
-                            <p className="font-semibold mb-1">Configuration Check:</p>
-                            <ul className="list-disc list-inside space-y-1">
-                              <li>Verify Project ID is correct</li>
-                              <li>Verify Bucket ID is correct</li>
-                              <li>Check environment variables</li>
-                            </ul>
-                          </div>
-                        )}
-                      </div>
+                      <p className="font-semibold">Failed to load materials</p>
+                      <p className="text-sm mt-2">{materialsError}</p>
                     </div>
-                    <div className="space-y-2">
-                      <button
-                        onClick={refreshMaterials}
-                        className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors"
-                      >
-                        Try Again
-                      </button>
-                      <div className="text-xs text-gray-500">
-                        Check browser console for detailed error information
-                      </div>
-                    </div>
+                    <button
+                      onClick={refreshMaterials}
+                      className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors"
+                    >
+                      Try Again
+                    </button>
                   </div>
                 ) : materials.length === 0 ? (
                   <div className="text-center py-8">
