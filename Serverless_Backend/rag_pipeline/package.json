@@ -1,0 +1,34 @@
+{
+  "name": "rag-pipeline",
+  "version": "1.0.0",
+  "description": "Modular RAG Pipeline with Appwrite, Qdrant, and Gemini AI",
+  "type": "module",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "node src/main.js",
+    "test": "node -e \"import('./src/main.js').then(m => m.testVectorSearch('test query'))\""
+  },
+  "dependencies": {
+    "@google/genai": "^1.2.0",
+    "@qdrant/js-client-rest": "^1.14.1",
+    "@tavily/core": "^0.5.6",
+    "dotenv": "^16.5.0",
+    "node-appwrite": "^17.0.0",
+    "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/uuid": "^10.0.0"
+  },
+  "keywords": [
+    "rag",
+    "vector-database",
+    "embeddings",
+    "ai",
+    "appwrite",
+    "qdrant",
+    "gemini"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}

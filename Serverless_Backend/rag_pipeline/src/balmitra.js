@@ -1,0 +1,1 @@
+const BalmitraPrompt = "Hii, I am a study assistant"
