@@ -22,7 +22,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import Whiteboard from "./Whiteboard";
 import Logo from "./Logo";
-// import RagStudyAssistant from "./study/RagStudyAssistant";
+import RagStudyAssistant from "./study/RagStudyAssistant";
 
 // Static chapters for each subject
 const subjectChapters = {
@@ -180,9 +180,24 @@ const StudentStudySpace = () => {
   };
 
   const handleVideoLinkClick = (message) => {
-    const urlMatch = message.text.match(/https?:\/\/[\w./?=&%-]+/);
+    const urlMatch = message.text.match(/https?:\/\/[^\s<>"{}|\\^`[\]]+/);
     if (urlMatch) {
-      setVideoUrl(urlMatch[0]);
+      let videoUrl = urlMatch[0];
+      
+      // Convert YouTube URLs to embed format
+      if (videoUrl.includes('youtube.com/watch')) {
+        const videoIdMatch = videoUrl.match(/[?&]v=([^&]+)/);
+        if (videoIdMatch) {
+          videoUrl = `https://www.youtube.com/embed/${videoIdMatch[1]}`;
+        }
+      } else if (videoUrl.includes('youtu.be/')) {
+        const videoIdMatch = videoUrl.match(/youtu\.be\/([^?&]+)/);
+        if (videoIdMatch) {
+          videoUrl = `https://www.youtube.com/embed/${videoIdMatch[1]}`;
+        }
+      }
+      
+      setVideoUrl(videoUrl);
       setSelectedTool('video');
     }
   };
@@ -211,9 +226,24 @@ const StudentStudySpace = () => {
     const data = JSON.parse(raw);
 
     // Extract video URL from the response text (if present)
-    const urlMatch = data.response.match(/https?:\/\/[\w./?=&%-]+/);
+    const urlMatch = data.response.match(/https?:\/\/[^\s<>"{}|\\^`[\]]+/);
     if (urlMatch) {
-      setVideoUrl(urlMatch[0]);
+      let videoUrl = urlMatch[0];
+      
+      // Convert YouTube URLs to embed format
+      if (videoUrl.includes('youtube.com/watch')) {
+        const videoIdMatch = videoUrl.match(/[?&]v=([^&]+)/);
+        if (videoIdMatch) {
+          videoUrl = `https://www.youtube.com/embed/${videoIdMatch[1]}`;
+        }
+      } else if (videoUrl.includes('youtu.be/')) {
+        const videoIdMatch = videoUrl.match(/youtu\.be\/([^?&]+)/);
+        if (videoIdMatch) {
+          videoUrl = `https://www.youtube.com/embed/${videoIdMatch[1]}`;
+        }
+      }
+      
+      setVideoUrl(videoUrl);
       setSelectedTool('video'); // Optionally switch to video tab
     } else {
       setVideoUrl(""); // No video found
@@ -408,7 +438,7 @@ console.log("chapters:", chapters);
           <div className="flex-1 p-4 overflow-auto">
             {selectedTool === 'video' && (
               <div className="w-full flex justify-center items-center">
-                {selectedChapter && videoUrl ? (
+                {videoUrl ? (
                   <div className="w-full aspect-[16/9] max-w-4xl">
                     <iframe
                       key={videoUrl}
@@ -419,6 +449,8 @@ console.log("chapters:", chapters);
                       allowFullScreen
                     ></iframe>
                   </div>
+                ) : selectedChapter ? (
+                  <p className="text-indigo-600">Video will appear here when you click a link from the chat</p>
                 ) : (
                   <p className="text-indigo-600">Select a chapter to begin</p>
                 )}
