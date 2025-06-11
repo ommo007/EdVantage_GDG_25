@@ -14,13 +14,56 @@ import {
   PanelRight,
   FileText,
   ListChecks,
-  Mic
+  Mic,
+  Download,
+  Eye
 } from "lucide-react";
 import { Link as LinkIcon } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import Whiteboard from "./Whiteboard";
 import Logo from "./Logo";
+import { Client as AppwriteClient, Storage } from 'appwrite';
+
+// Appwrite Configuration
+const APPWRITE_ENDPOINT = import.meta.env.VITE_APPWRITE_ENDPOINT || "https://cloud.appwrite.io/v1";
+const APPWRITE_PROJECT_ID = import.meta.env.VITE_APPWRITE_PROJECT_ID || "683073a1002d010defbb";
+const APPWRITE_BUCKET_ID = import.meta.env.VITE_APPWRITE_BUCKET_ID || "683073b70000fa32b6d3";
+
+// Initialize Appwrite Client with error handling
+let appwriteClient;
+let storage;
+
+try {
+  appwriteClient = new AppwriteClient()
+      .setEndpoint(APPWRITE_ENDPOINT)
+      .setProject(APPWRITE_PROJECT_ID);
+  
+  storage = new Storage(appwriteClient);
+  console.log("✅ Appwrite client initialized successfully");
+} catch (error) {
+  console.error("❌ Failed to initialize Appwrite client:", error);
+  appwriteClient = null;
+  storage = null;
+}
+
+// Utility function to format file size
+const formatFileSize = (bytes) => {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
+
+// Utility function to extract subject from filename
+const extractSubjectFromFilename = (filename) => {
+  const parts = filename.split('_');
+  if (parts.length >= 2) {
+    return parts[1].replace('.pdf', '').replace('.doc', '').replace('.docx', '');
+  }
+  return 'General';
+};
 
 // Static chapters for each subject
 const subjectChapters = {
@@ -77,11 +120,113 @@ const StudentStudySpace = () => {
   const [videoUrl, setVideoUrl] = useState("");
   const [quizzes, setQuizzes] = useState([]);
   const [materials, setMaterials] = useState([]);
+  const [materialsLoading, setMaterialsLoading] = useState(true);
+  const [materialsError, setMaterialsError] = useState(null);
   const chatContainerRef = useRef(null);
   const navigate = useNavigate();
 
   // Get chapters for the selected subject
    const chapters = subjectChapters[decodeURIComponent(subjectId)] || [];
+
+  // Function to get all files from Appwrite bucket and filter for class 9
+  const fetchClass9Files = async () => {
+    try {
+      // Check if Appwrite client is properly initialized
+      if (!storage) {
+        console.error("❌ Appwrite storage not initialized");
+        throw new Error("Appwrite storage not available. Please check configuration.");
+      }
+
+      console.log("🔄 Fetching class 9 files from Appwrite bucket...");
+      console.log("📊 Appwrite Config:", {
+        endpoint: APPWRITE_ENDPOINT,
+        projectId: APPWRITE_PROJECT_ID,
+        bucketId: APPWRITE_BUCKET_ID
+      });
+      
+      // Get list of files from the bucket
+      const appwriteFiles = await storage.listFiles(APPWRITE_BUCKET_ID);
+      console.log(`📁 Found ${appwriteFiles.total} total files in Appwrite bucket.`);
+      console.log("📋 All files:", appwriteFiles.files.map(f => f.name));
+      
+      if (appwriteFiles.files.length === 0) {
+        console.log('⚠️ No files found in the Appwrite bucket.');
+        return [];
+      }
+      
+      // Filter files that start with "c9"
+      const class9Files = appwriteFiles.files.filter(file => {
+        const isClass9 = file.name.toLowerCase().startsWith('c9');
+        console.log(`🔍 File: ${file.name} - Is Class 9: ${isClass9}`);
+        return isClass9;
+      });
+      
+      console.log(`✅ Found ${class9Files.length} class 9 files:`, class9Files.map(f => f.name));
+      
+      // Transform files to include view and download URLs
+      const filesWithUrls = class9Files.map(file => {
+        const fileData = {
+          id: file.$id,
+          name: file.name,
+          size: file.sizeOriginal,
+          mimeType: file.mimeType,
+          createdAt: file.$createdAt,
+          viewUrl: `${APPWRITE_ENDPOINT}/storage/buckets/${APPWRITE_BUCKET_ID}/files/${file.$id}/view?project=${APPWRITE_PROJECT_ID}`,
+          downloadUrl: `${APPWRITE_ENDPOINT}/storage/buckets/${APPWRITE_BUCKET_ID}/files/${file.$id}/download?project=${APPWRITE_PROJECT_ID}`
+        };
+        console.log(`🔗 Generated URLs for ${file.name}:`, {
+          view: fileData.viewUrl,
+          download: fileData.downloadUrl
+        });
+        return fileData;
+      });
+      
+      return filesWithUrls;
+    } catch (error) {
+      console.error('❌ Error fetching files from Appwrite:', error);
+      console.error('📝 Error details:', {
+        message: error.message,
+        code: error.code,
+        type: error.type
+      });
+      throw error; // Re-throw to be caught by the calling function
+    }
+  };
+
+  // Load materials on component mount
+  useEffect(() => {
+    const loadMaterials = async () => {
+      setMaterialsLoading(true);
+      setMaterialsError(null);
+      try {
+        const files = await fetchClass9Files();
+        setMaterials(files);
+        console.log(`📦 Set ${files.length} materials in state`);
+      } catch (error) {
+        console.error('❌ Error in loadMaterials:', error);
+        setMaterialsError(error.message);
+      } finally {
+        setMaterialsLoading(false);
+      }
+    };
+    loadMaterials();
+  }, []);
+
+  // Manual refresh function
+  const refreshMaterials = async () => {
+    setMaterialsLoading(true);
+    setMaterialsError(null);
+    try {
+      const files = await fetchClass9Files();
+      setMaterials(files);
+      console.log(`🔄 Refreshed materials: ${files.length} files loaded`);
+    } catch (error) {
+      console.error('❌ Error refreshing materials:', error);
+      setMaterialsError(error.message);
+    } finally {
+      setMaterialsLoading(false);
+    }
+  };
 
   // Scroll chat to bottom on new message
   useEffect(() => {
@@ -477,24 +622,94 @@ console.log("chapters:", chapters);
             )}
             {selectedTool === 'materials' && (
               <div>
-                {materials.length === 0 ? (
-                  <p className="text-indigo-600 text-center">No lecture materials uploaded yet.</p>
+                {materialsLoading ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+                    <p className="text-indigo-600">Loading class 9 materials...</p>
+                  </div>
+                ) : materialsError ? (
+                  <div className="text-center py-8">
+                    <div className="text-red-500 mb-4">
+                      <FileText className="mx-auto h-16 w-16 mb-2" />
+                      <p className="font-semibold">Failed to load materials</p>
+                      <p className="text-sm mt-2">{materialsError}</p>
+                    </div>
+                    <button
+                      onClick={refreshMaterials}
+                      className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors"
+                    >
+                      Try Again
+                    </button>
+                  </div>
+                ) : materials.length === 0 ? (
+                  <div className="text-center py-8">
+                    <FileText className="mx-auto h-16 w-16 text-indigo-300 mb-4" />
+                    <p className="text-indigo-600 mb-4">No class 9 lecture materials found.</p>
+                    <div className="text-sm text-gray-500 mb-4">
+                      <p>Expected file format: c9_SUBJECT.pdf</p>
+                      <p>Check browser console for debugging info</p>
+                    </div>
+                    <button
+                      onClick={refreshMaterials}
+                      className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors"
+                    >
+                      Refresh
+                    </button>
+                  </div>
                 ) : (
-                  <ul className="space-y-3">
-                    {materials.map((material) => (
-                      <li key={material.id} className="bg-indigo-50 p-4 rounded-lg flex justify-between items-center">
-                        <span className="font-medium text-indigo-800">{material.name}</span>
-                        <a
-                          href={material.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition"
-                        >
-                          View / Download
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
+                  <div>
+                    <div className="flex justify-between items-center mb-4">
+                      <p className="text-sm text-indigo-600">Found {materials.length} class 9 materials</p>
+                      <button
+                        onClick={refreshMaterials}
+                        className="px-3 py-1 text-sm bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200 transition-colors"
+                      >
+                        Refresh
+                      </button>
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+                      {materials.map((material) => (
+                        <div key={material.id} className="bg-white border border-indigo-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex-1">
+                              <h3 className="font-semibold text-indigo-900 text-sm mb-1">
+                                {material.name}
+                              </h3>
+                              <div className="text-xs text-indigo-600 space-y-1">
+                                <p>Subject: {extractSubjectFromFilename(material.name)}</p>
+                                <p>Size: {formatFileSize(material.size)}</p>
+                                <p>Type: {material.mimeType}</p>
+                                <p>Added: {new Date(material.createdAt).toLocaleDateString()}</p>
+                              </div>
+                            </div>
+                            <div className="flex-shrink-0 ml-3">
+                              <FileText className="h-8 w-8 text-indigo-400" />
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <a
+                              href={material.viewUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex-1 px-3 py-2 bg-indigo-100 text-indigo-700 rounded text-sm font-medium hover:bg-indigo-200 transition-colors flex items-center justify-center gap-1"
+                            >
+                              <Eye className="w-4 h-4" />
+                              View
+                            </a>
+                            <a
+                              href={material.downloadUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex-1 px-3 py-2 bg-indigo-600 text-white rounded text-sm font-medium hover:bg-indigo-700 transition-colors flex items-center justify-center gap-1"
+                            >
+                              <Download className="w-4 h-4" />
+                              Download
+                            </a>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 )}
               </div>
             )}
