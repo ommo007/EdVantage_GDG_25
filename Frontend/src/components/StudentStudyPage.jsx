@@ -12,7 +12,6 @@ import {
   BookOpen,
   ArrowLeft,
   PanelRight,
-  Database,
   FileText,
   ListChecks,
   Mic
@@ -22,7 +21,6 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import Whiteboard from "./Whiteboard";
 import Logo from "./Logo";
-import RagStudyAssistant from "./study/RagStudyAssistant";
 
 // Static chapters for each subject
 const subjectChapters = {
@@ -77,7 +75,6 @@ const StudentStudySpace = () => {
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [videoUrl, setVideoUrl] = useState("");
-  const [useRagAssistant, setUseRagAssistant] = useState(false);
   const [quizzes, setQuizzes] = useState([]);
   const [materials, setMaterials] = useState([]);
   const chatContainerRef = useRef(null);
@@ -206,14 +203,10 @@ const StudentStudySpace = () => {
     setSelectedTool('whiteboard');
   };
 
-  const toggleRagAssistant = () => {
-    setUseRagAssistant(!useRagAssistant);
-  };
-
   const fetchAIForChapter = async (subjectId, chapter) => {
   setIsLoading(true);
   try {
-    const response = await fetch("https://edvantage-gdg-25.onrender.com/api/chat", {
+    const response = await fetch("balmitra-ai-assistant.harshalmore2468.workers.dev/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -363,13 +356,6 @@ console.log("chapters:", chapters);
           >
             <FileText className="h-5 w-5 text-indigo-600" />
           </button>
-          <button
-            onClick={toggleRagAssistant}
-            className={`p-2 rounded-md ${useRagAssistant ? "bg-teal-200" : "hover:bg-indigo-100"}`}
-            title="AI Study Assistant"
-          >
-            <Database className="h-5 w-5 text-teal-600" />
-          </button>
         </div>
       </div>
 
@@ -431,7 +417,6 @@ console.log("chapters:", chapters);
               {selectedTool === 'whiteboard' && 'Study Notes'}
               {selectedTool === 'quiz' && 'Quiz'}
               {selectedTool === 'materials' && 'Lecture Materials'}
-              {useRagAssistant && selectedTool !== 'quiz' && selectedTool !== 'materials' && selectedTool !== 'video' && selectedTool !== 'whiteboard' && 'AI Study Assistant'}
             </h1>
           </div>
           {/* Main Workspace */}
@@ -509,108 +494,104 @@ console.log("chapters:", chapters);
         {/* Right Panel: Study Assistant */}
         {isAssistantOpen && (
           <div className="w-80 border-l border-indigo-100 bg-white flex flex-col overflow-hidden">
-            {useRagAssistant ? (
-              <RagStudyAssistant />
-            ) : (
-              <div className="flex flex-col h-full">
-                {/* Assistant Header */}
-                <div className="flex-shrink-0 p-3 border-b border-indigo-100 flex justify-between items-center">
-                  <h3 className="font-medium text-indigo-800">Study Assistant</h3>
-                  <button
-                    className="p-1 hover:bg-indigo-50 rounded"
-                    onClick={() => setIsAssistantOpen(false)}
-                  >
-                    <PanelRight className="h-4 w-4 text-indigo-600" />
-                  </button>
-                </div>
-                {/* Assistant Chat */}
-                <div
-                  className="flex-1 overflow-y-auto"
-                  ref={chatContainerRef}
+            <div className="flex flex-col h-full">
+              {/* Assistant Header */}
+              <div className="flex-shrink-0 p-3 border-b border-indigo-100 flex justify-between items-center">
+                <h3 className="font-medium text-indigo-800">Study Assistant</h3>
+                <button
+                  className="p-1 hover:bg-indigo-50 rounded"
+                  onClick={() => setIsAssistantOpen(false)}
                 >
-                  <div className="p-3 space-y-3">
-                    {messages.map((message) => (
-                      <div
-                        key={message.id}
-                        className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}
-                      >
-                        <div
-                          className={`max-w-[80%] rounded-xl px-3 py-2 text-sm ${
-                            message.sender === "user"
-                              ? "bg-indigo-600 text-white border-r-4 border-indigo-400 pr-4 shadow"
-                              : "bg-indigo-50 text-indigo-800 border-l-4 border-blue-400 pl-4"
-                          }`}
-                          onClick={() => handleVideoLinkClick(message)}
-                          style={{ cursor: message.sender === "bot" ? "pointer" : "default" }}
-                        >
-                          {message.sender === "bot" ? (
-                            <ReactMarkdown
-                              remarkPlugins={[remarkGfm]}
-                              components={{
-                                a: ({node, ...props}) => (
-                                  <a
-                                    {...props}
-                                    className="inline-flex items-center gap-1 text-blue-600 underline hover:text-blue-800 cursor-pointer"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    onClick={e => {
-                                      e.preventDefault();
-                                      handleVideoLinkClick(message);
-                                    }}
-                                  >
-                                    <LinkIcon className="w-4 h-4 inline" />
-                                    {props.children}
-                                  </a>
-                                ),
-                                p: ({node, ...props}) => <p {...props} className="mb-1" />
-                              }}
-                            >
-                              {message.text}
-                            </ReactMarkdown>
-                          ) : (
-                            message.text
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                    {isLoading && (
-                      <div className="flex justify-start">
-                        <div className="bg-indigo-50 text-indigo-800 rounded-xl px-3 py-2 text-sm">Thinking...</div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                {/* Assistant Input */}
-                <div className="flex-shrink-0 p-3 border-t border-indigo-100 bg-white">
-                  <div className="flex items-center gap-2">
-                    <textarea
-                      value={inputMessage}
-                      onChange={(e) => setInputMessage(e.target.value)}
-                      onKeyPress={handleKeyPress}
-                      placeholder="Ask for help with your studies..."
-                      rows="1"
-                      className="flex-1 px-3 py-2 border border-indigo-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none bg-indigo-50/30 placeholder-indigo-400 text-sm"
-                    />
-                     {/* Voice Assistant Button */}
-  <button
-    onClick={handleVoiceInput} // You will define this function
-    className="p-2 bg-indigo-100 text-indigo-600 rounded-lg hover:bg-indigo-200 transition duration-300"
-    title="Voice Assistant"
-    type="button"
-  >
-    <Mic className="w-5 h-5" />
-  </button>
-                    <button
-                      onClick={handleSendMessage}
-                      disabled={isLoading}
-                      className="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  <PanelRight className="h-4 w-4 text-indigo-600" />
+                </button>
+              </div>
+              {/* Assistant Chat */}
+              <div
+                className="flex-1 overflow-y-auto"
+                ref={chatContainerRef}
+              >
+                <div className="p-3 space-y-3">
+                  {messages.map((message) => (
+                    <div
+                      key={message.id}
+                      className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}
                     >
-                      <MessageSquare className="w-4 h-4" />
-                    </button>
-                  </div>
+                      <div
+                        className={`max-w-[80%] rounded-xl px-3 py-2 text-sm ${
+                          message.sender === "user"
+                            ? "bg-indigo-600 text-white border-r-4 border-indigo-400 pr-4 shadow"
+                            : "bg-indigo-50 text-indigo-800 border-l-4 border-blue-400 pl-4"
+                        }`}
+                        onClick={() => handleVideoLinkClick(message)}
+                        style={{ cursor: message.sender === "bot" ? "pointer" : "default" }}
+                      >
+                        {message.sender === "bot" ? (
+                          <ReactMarkdown
+                            remarkPlugins={[remarkGfm]}
+                            components={{
+                              a: ({node, ...props}) => (
+                                <a
+                                  {...props}
+                                  className="inline-flex items-center gap-1 text-blue-600 underline hover:text-blue-800 cursor-pointer"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={e => {
+                                    e.preventDefault();
+                                    handleVideoLinkClick(message);
+                                  }}
+                                >
+                                  <LinkIcon className="w-4 h-4 inline" />
+                                  {props.children}
+                                </a>
+                              ),
+                              p: ({node, ...props}) => <p {...props} className="mb-1" />
+                            }}
+                          >
+                            {message.text}
+                          </ReactMarkdown>
+                        ) : (
+                          message.text
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  {isLoading && (
+                    <div className="flex justify-start">
+                      <div className="bg-indigo-50 text-indigo-800 rounded-xl px-3 py-2 text-sm">Thinking...</div>
+                    </div>
+                  )}
                 </div>
               </div>
-            )}
+              {/* Assistant Input */}
+              <div className="flex-shrink-0 p-3 border-t border-indigo-100 bg-white">
+                <div className="flex items-center gap-2">
+                  <textarea
+                    value={inputMessage}
+                    onChange={(e) => setInputMessage(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    placeholder="Ask for help with your studies..."
+                    rows="1"
+                    className="flex-1 px-3 py-2 border border-indigo-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none bg-indigo-50/30 placeholder-indigo-400 text-sm"
+                  />
+                   {/* Voice Assistant Button */}
+<button
+  onClick={handleVoiceInput} // You will define this function
+  className="p-2 bg-indigo-100 text-indigo-600 rounded-lg hover:bg-indigo-200 transition duration-300"
+  title="Voice Assistant"
+  type="button"
+>
+  <Mic className="w-5 h-5" />
+</button>
+                  <button
+                    onClick={handleSendMessage}
+                    disabled={isLoading}
+                    className="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <MessageSquare className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>
