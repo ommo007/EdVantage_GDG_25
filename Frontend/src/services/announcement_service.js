@@ -12,16 +12,9 @@ export async function getAnnouncements(classId) {
 }
 
 // Create a new announcement for a class
-
-
 export async function createAnnouncement(classId, announcement) {
-  // Fetch currently logged in user
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
-
-  if (userError || !user) {
-    console.error("User not authenticated", userError);
-    throw new Error("You must be logged in to create an announcement.");
-  }
+  // For demo purposes, use a hardcoded teacher ID
+  const demoTeacherId = "9bd315e0-11e5-496a-a354-33dce517ef1a";
 
   const { data, error } = await supabase
     .from('announcements')
@@ -29,7 +22,7 @@ export async function createAnnouncement(classId, announcement) {
       {
         ...announcement,
         target_class_id: classId,
-        created_by_user_id: user.id,      // ✅ Set required field
+        created_by_user_id: demoTeacherId,      // ✅ Use demo teacher ID
         created_at: new Date().toISOString(),
       }
     ])

@@ -33,18 +33,19 @@ const AssignedClasses = () => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
+        setError(null);
 
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        // For demo purposes, use a hardcoded teacher ID that exists in the database
+        const demoTeacherId = "9bd315e0-11e5-496a-a354-33dce517ef1a"; // Working teacher ID
+        
+        console.log('🔍 Using demo teacher ID:', demoTeacherId);
 
-        if (userError || !user) {
-          throw new Error("User not logged in");
-        }
-
-        const assigned = await getAssignedClasses(user.id);
+        const assigned = await getAssignedClasses(demoTeacherId);
+        console.log('✅ Assigned classes loaded:', assigned);
         setClasses(assigned);
       } catch (err) {
-        console.error("Dashboard load failed:", err.message);
-        setError("Unable to load assigned classes. Please try again.");
+        console.error("❌ Dashboard load failed:", err);
+        setError(`Error: ${err.message}. Check console for details.`);
       } finally {
         setIsLoading(false);
       }

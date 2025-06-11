@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
@@ -43,57 +42,59 @@ const AssignedClass = () => {
   }, [classId]);
 
   const fetchClassroomData = async () => {
-  try {
-    setIsLoading(true);
+    try {
+      setIsLoading(true);
 
-    const classDetails = await getClassDetails(classId); // Supabase → classes
-    const subjects = await getSubjectsForClass(classId); // Supabase → class_subjects + subjects
-    const announcementsData = await getAnnouncements(classId);
-    const students = await getStudentsByClassId(classId);
+      // For demo purposes, no authentication required
+      console.log('🔍 Loading classroom data for demo...');
 
-    setClassData({
-      ...classDetails,
-      subjects: subjects.map(s => s.name || s),
-      studentCount: students.length,
-      section: classDetails.section, // ✅ Use actual section/division now
-      attendance: {
-        daily: 92,
-        weekly: 88,
-        monthly: 85,
-      },
-      performance: {
-        avgQuizScore: 76,
-        assignmentCompletion: 82,
-        participationRate: 78,
-      },
-      engagement: {
-        studySpaceTime: '4.2 hrs/week',
-        chatbotInteractions: 156,
-        liveParticipation: 84,
-      },
-    });
+      const classDetails = await getClassDetails(classId); // Supabase → classes
+      const subjects = await getSubjectsForClass(classId); // Supabase → class_subjects + subjects
+      const announcementsData = await getAnnouncements(classId);
+      const students = await getStudentsByClassId(classId);
 
-    setAnnouncements(announcementsData);
-  } catch (err) {
-    console.error(err);
-    setError('Failed to load classroom data');
-  } finally {
-    setIsLoading(false);
-  }
-};
+      setClassData({
+        ...classDetails,
+        subjects: subjects.map(s => s.name || s),
+        studentCount: students.length,
+        section: classDetails.section, // ✅ Use actual section/division now
+        attendance: {
+          daily: 92,
+          weekly: 88,
+          monthly: 85,
+        },
+        performance: {
+          avgQuizScore: 76,
+          assignmentCompletion: 82,
+          participationRate: 78,
+        },
+        engagement: {
+          studySpaceTime: '4.2 hrs/week',
+          chatbotInteractions: 156,
+          liveParticipation: 84,
+        },
+      });
 
- const handleAddAnnouncement = async () => {
-  if (!announcementTitle.trim() || !announcementDesc.trim()) {
-    alert("Please fill in both title and description.");
-    return;
-  }
-
-  const newAnnouncement = {
-    title: announcementTitle,
-    content: announcementDesc,
-    publish_date: new Date().toISOString(),
+      setAnnouncements(announcementsData);
+    } catch (err) {
+      console.error('Error fetching classroom data:', err);
+      setError('Failed to load classroom data: ' + (err.message || 'Unknown error'));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
+  const handleAddAnnouncement = async () => {
+    if (!announcementTitle.trim() || !announcementDesc.trim()) {
+      alert("Please fill in both title and description.");
+      return;
+    }
+
+    const newAnnouncement = {
+      title: announcementTitle,
+      content: announcementDesc,
+      publish_date: new Date().toISOString(),
+    };
 
     try {
       const saved = await createAnnouncement(classId, newAnnouncement);
