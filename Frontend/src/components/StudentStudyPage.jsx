@@ -122,6 +122,13 @@ const StudentStudySpace = () => {
   const [materials, setMaterials] = useState([]);
   const [materialsLoading, setMaterialsLoading] = useState(true);
   const [materialsError, setMaterialsError] = useState(null);
+  const [quiz, setQuiz] = useState(null);
+  const [quizLoading, setQuizLoading] = useState(false);
+  const [quizError, setQuizError] = useState(null);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [userAnswers, setUserAnswers] = useState({});
+  const [quizCompleted, setQuizCompleted] = useState(false);
+  const [quizResults, setQuizResults] = useState(null);
   const chatContainerRef = useRef(null);
   const navigate = useNavigate();
 
@@ -416,6 +423,162 @@ const StudentStudySpace = () => {
   fetchAIForChapter(subjectId, chapter);
 };
 
+  // Generate quiz using AI
+  const generateQuiz = async (type, content) => {
+    setQuizLoading(true);
+    setQuizError(null);
+    setQuiz(null);
+    setQuizCompleted(false);
+    setQuizResults(null);
+    setUserAnswers({});
+    setCurrentQuestionIndex(0);
+
+    try {
+      let prompt = "";
+      
+      if (type === "video" && videoUrl) {
+        prompt = `Create a 10-question quiz based on the educational video content. The video URL is: ${videoUrl}. Generate questions that test understanding of the key concepts taught in the video.`;
+      } else if (type === "chapter" && selectedChapter) {
+        prompt = `Create a 10-question NCERT-based quiz for Class 9 on the chapter "${selectedChapter}" in ${decodeURIComponent(subjectId)}. Focus on important concepts, definitions, and applications from the NCERT curriculum.`;
+      } else {
+        prompt = `Create a 10-question NCERT-based quiz for Class 9 ${decodeURIComponent(subjectId)}. Cover important topics from the curriculum.`;
+      }
+
+      prompt += ` 
+
+Format your response as a valid JSON object with this exact structure:
+{
+  "title": "Quiz Title",
+  "questions": [
+    {
+      "id": 1,
+      "question": "Question text here?",
+      "options": ["Option A", "Option B", "Option C", "Option D"],
+      "correct_answer": 0,
+      "explanation": "Brief explanation of the correct answer"
+    }
+  ]
+}
+
+Make sure:
+- Each question has exactly 4 options
+- correct_answer is the index (0-3) of the correct option
+- Include clear explanations
+- Cover different difficulty levels
+- Return only the JSON, no additional text`;
+
+      console.log("🎯 Generating quiz with prompt:", prompt);
+
+      const response = await fetch("https://balmitra-ai-assistant.harshalmore2468.workers.dev/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: prompt,
+          role: "student"
+        })
+      });
+
+      const raw = await response.text();
+      console.log("📥 Raw quiz response:", raw);
+
+      const data = JSON.parse(raw);
+      console.log("📊 Parsed response:", data);
+
+      // Extract JSON from the response
+      let quizJson = data.response;
+      
+      // Try to extract JSON if it's wrapped in text
+      const jsonMatch = quizJson.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        quizJson = jsonMatch[0];
+      }
+
+      const quizData = JSON.parse(quizJson);
+      console.log("🎯 Generated quiz:", quizData);
+
+      // Validate quiz structure
+      if (!quizData.questions || !Array.isArray(quizData.questions)) {
+        throw new Error("Invalid quiz format: missing questions array");
+      }
+
+      setQuiz(quizData);
+      setSelectedTool('quiz');
+
+    } catch (error) {
+      console.error("❌ Quiz generation failed:", error);
+      setQuizError(error.message || "Failed to generate quiz");
+    } finally {
+      setQuizLoading(false);
+    }
+  };
+
+  // Handle answer selection
+  const selectAnswer = (questionId, optionIndex) => {
+    setUserAnswers(prev => ({
+      ...prev,
+      [questionId]: optionIndex
+    }));
+  };
+
+  // Navigate quiz questions
+  const nextQuestion = () => {
+    if (currentQuestionIndex < quiz.questions.length - 1) {
+      setCurrentQuestionIndex(currentQuestionIndex + 1);
+    }
+  };
+
+  const previousQuestion = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex(currentQuestionIndex - 1);
+    }
+  };
+
+  // Submit quiz and calculate results
+  const submitQuiz = () => {
+    const results = {
+      totalQuestions: quiz.questions.length,
+      correctAnswers: 0,
+      incorrectAnswers: 0,
+      score: 0,
+      details: []
+    };
+
+    quiz.questions.forEach((question, index) => {
+      const userAnswer = userAnswers[question.id];
+      const isCorrect = userAnswer === question.correct_answer;
+      
+      if (isCorrect) {
+        results.correctAnswers++;
+      } else {
+        results.incorrectAnswers++;
+      }
+
+      results.details.push({
+        questionId: question.id,
+        question: question.question,
+        userAnswer: userAnswer,
+        correctAnswer: question.correct_answer,
+        isCorrect: isCorrect,
+        explanation: question.explanation,
+        options: question.options
+      });
+    });
+
+    results.score = Math.round((results.correctAnswers / results.totalQuestions) * 100);
+    setQuizResults(results);
+    setQuizCompleted(true);
+  };
+
+  // Reset quiz
+  const resetQuiz = () => {
+    setQuiz(null);
+    setQuizCompleted(false);
+    setQuizResults(null);
+    setUserAnswers({});
+    setCurrentQuestionIndex(0);
+    setQuizError(null);
+  };
+
   console.log("subjectId:", subjectId);
 console.log("chapters:", chapters);
 
@@ -598,25 +761,233 @@ console.log("chapters:", chapters);
             )}
             {selectedTool === 'whiteboard' && <Whiteboard />}
             {selectedTool === 'quiz' && (
-              <div>
-                {quizzes.length === 0 ? (
-                  <p className="text-indigo-600 text-center ">No quizzes available yet.</p>
-                ) : (
-                  <ul className="space-y-3">
-                    {quizzes.map((quiz) => (
-                      <li key={quiz.id} className="bg-indigo-50 p-4 rounded-lg flex justify-between items-center">
-                        <span className="font-medium text-indigo-800">{quiz.title}</span>
-                        <a
-                          href={quiz.link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition"
+              <div className="h-full flex flex-col">
+                {quizLoading ? (
+                  <div className="flex-1 flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+                      <p className="text-indigo-600">Generating your quiz...</p>
+                    </div>
+                  </div>
+                ) : quizError ? (
+                  <div className="flex-1 flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="text-red-500 mb-4">
+                        <ListChecks className="mx-auto h-16 w-16 mb-2" />
+                        <p className="font-semibold">Failed to generate quiz</p>
+                        <p className="text-sm mt-2">{quizError}</p>
+                      </div>
+                      <button
+                        onClick={() => generateQuiz("chapter")}
+                        className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors"
+                      >
+                        Try Again
+                      </button>
+                    </div>
+                  </div>
+                ) : quizCompleted ? (
+                  <div className="flex-1 overflow-auto p-4">
+                    <div className="max-w-4xl mx-auto">
+                      {/* Quiz Results */}
+                      <div className="bg-white border border-indigo-200 rounded-lg p-6 mb-6">
+                        <div className="text-center mb-6">
+                          <h2 className="text-2xl font-bold text-indigo-900 mb-2">Quiz Complete!</h2>
+                          <div className="flex justify-center items-center gap-4 mb-4">
+                            <div className="text-center">
+                              <div className="text-3xl font-bold text-indigo-600">{quizResults.score}%</div>
+                              <div className="text-sm text-gray-600">Score</div>
+                            </div>
+                            <div className="text-center">
+                              <div className="text-3xl font-bold text-green-600">{quizResults.correctAnswers}</div>
+                              <div className="text-sm text-gray-600">Correct</div>
+                            </div>
+                            <div className="text-center">
+                              <div className="text-3xl font-bold text-red-600">{quizResults.incorrectAnswers}</div>
+                              <div className="text-sm text-gray-600">Incorrect</div>
+                            </div>
+                          </div>
+                          <div className="flex gap-3 justify-center">
+                            <button
+                              onClick={resetQuiz}
+                              className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors"
+                            >
+                              Take New Quiz
+                            </button>
+                            <button
+                              onClick={() => generateQuiz("chapter")}
+                              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+                            >
+                              Retry Quiz
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Detailed Results */}
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-semibold text-indigo-900">Detailed Results</h3>
+                        {quizResults.details.map((result, index) => (
+                          <div key={result.questionId} className={`bg-white border-l-4 rounded-lg p-4 ${result.isCorrect ? 'border-green-400' : 'border-red-400'}`}>
+                            <div className="flex items-start justify-between mb-2">
+                              <h4 className="font-medium text-gray-900">Question {index + 1}</h4>
+                              <span className={`px-2 py-1 rounded text-xs font-medium ${result.isCorrect ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                {result.isCorrect ? 'Correct' : 'Incorrect'}
+                              </span>
+                            </div>
+                            <p className="text-gray-700 mb-3">{result.question}</p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-3">
+                              {result.options.map((option, optionIndex) => (
+                                <div
+                                  key={optionIndex}
+                                  className={`p-2 rounded text-sm ${
+                                    optionIndex === result.correctAnswer
+                                      ? 'bg-green-100 text-green-800 border border-green-300'
+                                      : optionIndex === result.userAnswer && !result.isCorrect
+                                      ? 'bg-red-100 text-red-800 border border-red-300'
+                                      : 'bg-gray-50 text-gray-700'
+                                  }`}
+                                >
+                                  {String.fromCharCode(65 + optionIndex)}. {option}
+                                  {optionIndex === result.correctAnswer && ' ✓'}
+                                  {optionIndex === result.userAnswer && !result.isCorrect && ' ✗'}
+                                </div>
+                              ))}
+                            </div>
+                            <div className="bg-blue-50 border-l-4 border-blue-400 p-3">
+                              <p className="text-sm text-blue-800">
+                                <strong>Explanation:</strong> {result.explanation}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ) : quiz ? (
+                  <div className="flex-1 flex flex-col">
+                    {/* Quiz Header */}
+                    <div className="bg-white border-b border-indigo-200 p-4">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <h2 className="text-xl font-bold text-indigo-900">{quiz.title}</h2>
+                          <p className="text-sm text-gray-600">
+                            Question {currentQuestionIndex + 1} of {quiz.questions.length}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-sm text-gray-600">Progress</div>
+                          <div className="text-lg font-semibold text-indigo-600">
+                            {Math.round(((currentQuestionIndex + 1) / quiz.questions.length) * 100)}%
+                          </div>
+                        </div>
+                      </div>
+                      <div className="mt-3 bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${((currentQuestionIndex + 1) / quiz.questions.length) * 100}%` }}
+                        ></div>
+                      </div>
+                    </div>
+
+                    {/* Quiz Question */}
+                    <div className="flex-1 overflow-auto p-6">
+                      <div className="max-w-2xl mx-auto">
+                        {quiz.questions[currentQuestionIndex] && (
+                          <div>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-6">
+                              {quiz.questions[currentQuestionIndex].question}
+                            </h3>
+                            <div className="space-y-3">
+                              {quiz.questions[currentQuestionIndex].options.map((option, index) => (
+                                <button
+                                  key={index}
+                                  onClick={() => selectAnswer(quiz.questions[currentQuestionIndex].id, index)}
+                                  className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
+                                    userAnswers[quiz.questions[currentQuestionIndex].id] === index
+                                      ? 'border-indigo-500 bg-indigo-50 text-indigo-900'
+                                      : 'border-gray-200 hover:border-indigo-200 hover:bg-indigo-25'
+                                  }`}
+                                >
+                                  <div className="flex items-center">
+                                    <span className="w-8 h-8 rounded-full border-2 border-current flex items-center justify-center mr-3 text-sm font-medium">
+                                      {String.fromCharCode(65 + index)}
+                                    </span>
+                                    <span>{option}</span>
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Quiz Navigation */}
+                    <div className="bg-white border-t border-indigo-200 p-4">
+                      <div className="flex justify-between items-center">
+                        <button
+                          onClick={previousQuestion}
+                          disabled={currentQuestionIndex === 0}
+                          className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          Attempt Quiz
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
+                          Previous
+                        </button>
+                        
+                        <div className="text-sm text-gray-600">
+                          Answered: {Object.keys(userAnswers).length} / {quiz.questions.length}
+                        </div>
+
+                        {currentQuestionIndex === quiz.questions.length - 1 ? (
+                          <button
+                            onClick={submitQuiz}
+                            disabled={Object.keys(userAnswers).length !== quiz.questions.length}
+                            className="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            Submit Quiz
+                          </button>
+                        ) : (
+                          <button
+                            onClick={nextQuestion}
+                            className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors"
+                          >
+                            Next
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex-1 flex items-center justify-center">
+                    <div className="text-center max-w-md">
+                      <ListChecks className="mx-auto h-16 w-16 text-indigo-300 mb-4" />
+                      <h3 className="text-xl font-semibold text-indigo-900 mb-4">Ready for a Quiz?</h3>
+                      <p className="text-gray-600 mb-6">Test your knowledge with AI-generated quizzes</p>
+                      <div className="space-y-3">
+                        {selectedChapter && (
+                          <button
+                            onClick={() => generateQuiz("chapter")}
+                            className="w-full px-4 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium"
+                          >
+                            📚 Quiz on "{selectedChapter}"
+                          </button>
+                        )}
+                        {videoUrl && (
+                          <button
+                            onClick={() => generateQuiz("video")}
+                            className="w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+                          >
+                            🎥 Quiz on Current Video
+                          </button>
+                        )}
+                        <button
+                          onClick={() => generateQuiz("general")}
+                          className="w-full px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                        >
+                          🎯 General {decodeURIComponent(subjectId)} Quiz
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 )}
               </div>
             )}
