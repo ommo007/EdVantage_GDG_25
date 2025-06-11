@@ -3,13 +3,25 @@ import { supabase } from "../lib/supabaseClient";
 // 4. Subject & Material Service
 
 export async function getSubjectsForClass(classId) {
-  const { data, error } = await supabase
-    .from("class_subjects")
-    .select("subject_id, subjects(name)")
-    .eq("class_id", classId);
+  try {
+    console.log('getSubjectsForClass called with classId:', classId);
+    
+    const { data, error } = await supabase
+      .from("class_subjects")
+      .select("subject_id, subjects(name)")
+      .eq("class_id", classId);
 
-  if (error) throw error;
-  return data.map(item => item.subjects); // Return subject details
+    if (error) {
+      console.error('Supabase error in getSubjectsForClass:', error);
+      throw error;
+    }
+
+    console.log('getSubjectsForClass data received:', data);
+    return data.map(item => item.subjects); // Return subject details
+  } catch (error) {
+    console.error('Error in getSubjectsForClass:', error);
+    throw error;
+  }
 }
 
 //will be done using app/write

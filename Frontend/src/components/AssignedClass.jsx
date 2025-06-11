@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
@@ -18,11 +17,13 @@ import {
 import DashboardHeader from './shared/DashboardHeader';
 import StatCard from './shared/StatCard';
 import DashboardInitializer from './shared/DashboardInitializer';
+import AuthDebug from './AuthDebug';
 
 import { getClassDetails } from '../services/classroom_service';
 import { getSubjectsForClass } from '../services/material_service';
 import { getAnnouncements, createAnnouncement } from '../services/announcement_service';
 import { getStudentsByClassId } from '../services/student_service';
+import { supabase } from '../lib/supabaseClient';
 
 const AssignedClass = () => {
   const { classId } = useParams();
@@ -43,57 +44,63 @@ const AssignedClass = () => {
   }, [classId]);
 
   const fetchClassroomData = async () => {
-  try {
-    setIsLoading(true);
+    try {
+      setIsLoading(true);
 
-    const classDetails = await getClassDetails(classId); // Supabase → classes
-    const subjects = await getSubjectsForClass(classId); // Supabase → class_subjects + subjects
-    const announcementsData = await getAnnouncements(classId);
-    const students = await getStudentsByClassId(classId);
+      // Get authenticated user ID directly from Supabase
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !user) {
+        throw new Error("User not authenticated");
+      }
 
-    setClassData({
-      ...classDetails,
-      subjects: subjects.map(s => s.name || s),
-      studentCount: students.length,
-      section: classDetails.section, // ✅ Use actual section/division now
-      attendance: {
-        daily: 92,
-        weekly: 88,
-        monthly: 85,
-      },
-      performance: {
-        avgQuizScore: 76,
-        assignmentCompletion: 82,
-        participationRate: 78,
-      },
-      engagement: {
-        studySpaceTime: '4.2 hrs/week',
-        chatbotInteractions: 156,
-        liveParticipation: 84,
-      },
-    });
+      const classDetails = await getClassDetails(classId); // Supabase → classes
+      const subjects = await getSubjectsForClass(classId); // Supabase → class_subjects + subjects
+      const announcementsData = await getAnnouncements(classId);
+      const students = await getStudentsByClassId(classId);
 
-    setAnnouncements(announcementsData);
-  } catch (err) {
-    console.error(err);
-    setError('Failed to load classroom data');
-  } finally {
-    setIsLoading(false);
-  }
-};
+      setClassData({
+        ...classDetails,
+        subjects: subjects.map(s => s.name || s),
+        studentCount: students.length,
+        section: classDetails.section, // ✅ Use actual section/division now
+        attendance: {
+          daily: 92,
+          weekly: 88,
+          monthly: 85,
+        },
+        performance: {
+          avgQuizScore: 76,
+          assignmentCompletion: 82,
+          participationRate: 78,
+        },
+        engagement: {
+          studySpaceTime: '4.2 hrs/week',
+          chatbotInteractions: 156,
+          liveParticipation: 84,
+        },
+      });
 
- const handleAddAnnouncement = async () => {
-  if (!announcementTitle.trim() || !announcementDesc.trim()) {
-    alert("Please fill in both title and description.");
-    return;
-  }
-
-  const newAnnouncement = {
-    title: announcementTitle,
-    content: announcementDesc,
-    publish_date: new Date().toISOString(),
+      setAnnouncements(announcementsData);
+    } catch (err) {
+      console.error('Error fetching classroom data:', err);
+      setError('Failed to load classroom data: ' + (err.message || 'Unknown error'));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
+  const handleAddAnnouncement = async () => {
+    if (!announcementTitle.trim() || !announcementDesc.trim()) {
+      alert("Please fill in both title and description.");
+      return;
+    }
+
+    const newAnnouncement = {
+      title: announcementTitle,
+      content: announcementDesc,
+      publish_date: new Date().toISOString(),
+    };
 
     try {
       const saved = await createAnnouncement(classId, newAnnouncement);
@@ -135,6 +142,9 @@ const AssignedClass = () => {
   return (
     <DashboardInitializer expectedRole="teacher">
       <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-white">
+        {/* Temporary Debug Component */}
+        <AuthDebug />
+        
         {/* Header */}
         <DashboardHeader userRole="teacher" />
 
