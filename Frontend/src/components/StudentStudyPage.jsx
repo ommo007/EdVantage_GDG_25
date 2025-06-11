@@ -110,7 +110,7 @@ const StudentStudySpace = () => {
   try {
     console.log("📤 Sending to AI API:", currentMessage);
 
-    const response = await fetch("https://edvantage-gdg-25.onrender.com/api/chat", {
+    const response = await fetch("https://balmitra-ai-assistant.harshalmore2468.workers.dev/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message: currentMessage, role: "student" })
