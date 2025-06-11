@@ -206,13 +206,12 @@ const StudentStudySpace = () => {
   const fetchAIForChapter = async (subjectId, chapter) => {
   setIsLoading(true);
   try {
-    const response = await fetch("balmitra-ai-assistant.harshalmore2468.workers.dev/api/chat", {
+    const response = await fetch("https://balmitra-ai-assistant.harshalmore2468.workers.dev/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        role: "student",
-        subject: subjectId,
-        chapter: chapter
+        message: `Find educational videos for the topic "${chapter}" in ${subjectId}. Please provide YouTube video links for learning about ${chapter}.`,
+        role: "student"
       })
     });
     const raw = await response.text();
@@ -237,7 +236,7 @@ const StudentStudySpace = () => {
       }
       
       setVideoUrl(videoUrl);
-      setSelectedTool('video'); // Optionally switch to video tab
+      setSelectedTool('video'); // Switch to video tab
     } else {
       setVideoUrl(""); // No video found
     }
@@ -249,7 +248,8 @@ const StudentStudySpace = () => {
     };
     setMessages(prev => [...prev, botMessage]);
   } catch (err) {
-    setMessages(prev => [...prev, { id: messages.length + 1, text: "Sorry, the assistant is not responding.", sender: "bot" }]);
+    console.error("❌ Chapter video fetch failed:", err);
+    setMessages(prev => [...prev, { id: messages.length + 1, text: "Sorry, couldn't find videos for this chapter.", sender: "bot" }]);
   } finally {
     setIsLoading(false);
   }
@@ -258,6 +258,16 @@ const StudentStudySpace = () => {
   // When a chapter is clicked, set it as selected and (optionally) fetch videos/materials for it
  const handleChapterClick = (chapter) => {
   setSelectedChapter(chapter);
+  
+  // Add a user message to show which chapter was selected
+  const userMessage = {
+    id: messages.length + 1,
+    text: `Show me videos for: ${chapter}`,
+    sender: "user"
+  };
+  setMessages(prev => [...prev, userMessage]);
+  
+  // Fetch videos for the selected chapter
   fetchAIForChapter(subjectId, chapter);
 };
 
