@@ -22,7 +22,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import Whiteboard from "./Whiteboard";
 import Logo from "./Logo";
-import RagStudyAssistant from "./study/RagStudyAssistant";
+// import RagStudyAssistant from "./study/RagStudyAssistant";
 
 // Static chapters for each subject
 const subjectChapters = {
