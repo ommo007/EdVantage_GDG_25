@@ -65,6 +65,25 @@ const extractSubjectFromFilename = (filename) => {
   return 'General';
 };
 
+// Utility function to extract YouTube video ID from URL
+const extractVideoId = (url) => {
+  if (!url) return null;
+  
+  // Handle embed URLs
+  const embedMatch = url.match(/youtube\.com\/embed\/([^?&]+)/);
+  if (embedMatch) return embedMatch[1];
+  
+  // Handle watch URLs
+  const watchMatch = url.match(/[?&]v=([^&]+)/);
+  if (watchMatch) return watchMatch[1];
+  
+  // Handle youtu.be URLs
+  const shortMatch = url.match(/youtu\.be\/([^?&]+)/);
+  if (shortMatch) return shortMatch[1];
+  
+  return null;
+};
+
 // Static chapters for each subject
 const subjectChapters = {
   mathematics: [
@@ -437,7 +456,29 @@ const StudentStudySpace = () => {
       let prompt = "";
       
       if (type === "video" && videoUrl) {
-        prompt = `Create a 10-question quiz based on the educational video content. The video URL is: ${videoUrl}. Generate questions that test understanding of the key concepts taught in the video.`;
+        console.log("🔍 Generating quiz based on video URL:", videoUrl);
+        
+        const videoId = extractVideoId(videoUrl);
+        console.log("📹 Extracted video ID:", videoId);
+        
+        // Generate quiz based on video URL and context
+        prompt = `Create a 10-question educational quiz based on this YouTube video:
+
+Video URL: ${videoUrl}
+Video ID: ${videoId}
+Current Subject: ${decodeURIComponent(subjectId)}
+${selectedChapter ? `Current Chapter: ${selectedChapter}` : ''}
+
+Since this video was found in the context of ${decodeURIComponent(subjectId)}${selectedChapter ? ` while studying "${selectedChapter}"` : ''}, create quiz questions that would be relevant for Class 9 students learning about this topic.
+
+Generate questions covering:
+- Basic concepts and definitions related to the subject
+- Fundamental principles that would be taught in such educational videos
+- Common applications and examples in ${decodeURIComponent(subjectId)}
+- Key learning objectives for Class 9 ${decodeURIComponent(subjectId)}
+
+Make the quiz educational and appropriate for Class 9 level, focusing on core concepts that would typically be covered in educational videos for this subject.`;
+
       } else if (type === "chapter" && selectedChapter) {
         prompt = `Create a 10-question NCERT-based quiz for Class 9 on the chapter "${selectedChapter}" in ${decodeURIComponent(subjectId)}. Focus on important concepts, definitions, and applications from the NCERT curriculum.`;
       } else {
@@ -976,7 +1017,7 @@ console.log("chapters:", chapters);
                             onClick={() => generateQuiz("video")}
                             className="w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
                           >
-                            🎥 Quiz on Current Video
+                            🎥 Quiz Based on Video Topic
                           </button>
                         )}
                         <button
